@@ -1,9 +1,11 @@
 ﻿"use client";
 
-import { Search, Plus, LayoutGrid, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { useState } from "react";
+import { Search, Plus, AlertCircle, CheckCircle2, Clock, Share2, Check } from "lucide-react";
 import { PlannerTask } from "@/types/planner";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BrandLogo } from "@/components/brand-logo";
 
 interface KanbanHeaderProps {
   tasks: PlannerTask[];
@@ -26,28 +28,52 @@ export function KanbanHeader({
   setPriorityFilter,
   onOpenNewCard,
 }: KanbanHeaderProps) {
+  const [copied, setCopied] = useState(false);
+
   const criticalCount = tasks.filter((t) => t.priority === "critical" && t.column !== "done").length;
   const inProgressCount = tasks.filter((t) => t.column === "in_progress").length;
   const doneCount = tasks.filter((t) => t.column === "done").length;
 
+  const handleShare = async () => {
+    try {
+      if (typeof window !== "undefined") {
+        if (navigator.share) {
+          await navigator.share({
+            title: "RN Planner",
+            text: "Quadro de execução pessoal com arrastar e soltar, foco diário e métricas.",
+            url: window.location.href,
+          });
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }
+      }
+    } catch (e) {
+      // Fallback simples caso permissão seja negada
+      if (typeof window !== "undefined") {
+        navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
-      {/* Top Row: Title & Action */}
+      {/* Top Row: Logo & Actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400">
-            <LayoutGrid className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-            <span className="text-slate-900 dark:text-white font-semibold">RN Planner</span>
-            <span>/</span>
-            <span className="text-cyan-600 dark:text-cyan-400">Sprint Ativa</span>
+        {/* Minimalist Brand Logo */}
+        <div className="flex items-center gap-3">
+          <BrandLogo size={38} showText={true} />
+          <div className="hidden sm:block h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
+            <span>Sprint Ativa</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
-            Quadro de Execução & Tarefas
-          </h1>
         </div>
 
-        {/* Action Button & Fast Stats */}
-        <div className="flex items-center gap-3">
+        {/* Action Buttons & Fast Stats */}
+        <div className="flex items-center gap-2.5">
           {/* Status Badges */}
           <div className="hidden md:flex items-center gap-2 text-xs">
             <div className="flex items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-rose-600 dark:text-rose-400 font-medium">
@@ -63,6 +89,25 @@ export function KanbanHeader({
               <span>{doneCount} Concluídos</span>
             </div>
           </div>
+
+          {/* Botão de Compartilhar Link */}
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/[0.8] hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/10 hover:border-cyan-500/30 dark:hover:border-cyan-400/30 transition-all cursor-pointer shadow-sm"
+            title="Copiar link ou compartilhar o planner"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="text-emerald-500 font-semibold">Copiado!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                <span className="hidden sm:inline">Compartilhar</span>
+              </>
+            )}
+          </button>
 
           {/* Alternador de Tema (Claro / Obsidian) */}
           <ThemeToggle />

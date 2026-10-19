@@ -1,0 +1,10 @@
+﻿<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="16" fill="#090d16" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+  <!-- R Monogram -->
+  <path d="M18 44V20H28C31.5 20 34 22.5 34 26C34 29.5 31.5 32 28 32H18" stroke="#06b6d4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M26 32L34 44" stroke="#06b6d4" stroke-width="4" stroke-linecap="round"/>
+  <!-- N Monogram -->
+  <path d="M37 44V20L47 44V20" stroke="#f8fafc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Neon Accent Dot -->
+  <circle cx="47" cy="20" r="3" fill="#06b6d4"/>
+</svg>
