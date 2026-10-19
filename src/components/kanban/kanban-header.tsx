@@ -6,6 +6,7 @@ import { PlannerTask } from "@/types/planner";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BrandLogo } from "@/components/brand-logo";
+import { UserButton } from "@/components/auth/user-button";
 
 interface KanbanHeaderProps {
   tasks: PlannerTask[];
@@ -39,7 +40,7 @@ export function KanbanHeader({
       if (typeof window !== "undefined") {
         if (navigator.share) {
           await navigator.share({
-            title: "RN Planner",
+            title: "planner",
             text: "Quadro de execução pessoal com arrastar e soltar, foco diário e métricas.",
             url: window.location.href,
           });
@@ -50,7 +51,6 @@ export function KanbanHeader({
         }
       }
     } catch (e) {
-      // Fallback simples caso permissão seja negada
       if (typeof window !== "undefined") {
         navigator.clipboard.writeText(window.location.href);
         setCopied(true);
@@ -65,7 +65,7 @@ export function KanbanHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Minimalist Brand Logo */}
         <div className="flex items-center gap-3">
-          <BrandLogo size={38} showText={true} />
+          <BrandLogo size={36} showText={true} />
           <div className="hidden sm:block h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
             <span>Sprint Ativa</span>
@@ -73,9 +73,9 @@ export function KanbanHeader({
         </div>
 
         {/* Action Buttons & Fast Stats */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {/* Status Badges */}
-          <div className="hidden md:flex items-center gap-2 text-xs">
+          <div className="hidden lg:flex items-center gap-2 text-xs">
             <div className="flex items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-rose-600 dark:text-rose-400 font-medium">
               <AlertCircle className="h-3.5 w-3.5" />
               <span>{criticalCount} Críticos</span>
@@ -93,7 +93,7 @@ export function KanbanHeader({
           {/* Botão de Compartilhar Link */}
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/[0.8] hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/10 hover:border-cyan-500/30 dark:hover:border-cyan-400/30 transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/[0.8] hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/10 hover:border-cyan-500/30 dark:hover:border-cyan-400/30 transition-all cursor-pointer shadow-xs"
             title="Copiar link ou compartilhar o planner"
           >
             {copied ? (
@@ -112,10 +112,13 @@ export function KanbanHeader({
           {/* Alternador de Tema (Claro / Obsidian) */}
           <ThemeToggle />
 
+          {/* Login Rápido com Google */}
+          <UserButton />
+
           {/* Botão Novo Card */}
           <button
             onClick={onOpenNewCard}
-            className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold bg-white/[0.8] hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 dark:hover:border-cyan-400/40 hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.25)] transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold bg-white/[0.8] hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 dark:hover:border-cyan-400/40 hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.25)] transition-all cursor-pointer shadow-xs"
           >
             <Plus className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
             <span>Novo Card</span>
