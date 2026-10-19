@@ -58,7 +58,7 @@ export function KanbanColumn({
           : "border-white/10 bg-[#0b0f1a]/60"
       }`}
     >
-      {/* Column Header (Azure DevOps Style) */}
+      {/* Cabeçalho da Coluna */}
       <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
         <div className="flex items-center gap-2">
           <span className={`h-2.5 w-2.5 rounded-full ${column.dotColor}`} />

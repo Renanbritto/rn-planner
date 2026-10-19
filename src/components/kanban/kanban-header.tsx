@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Search, Plus, Filter, LayoutGrid, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { Search, Plus, LayoutGrid, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { PlannerTask } from "@/types/planner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export function KanbanHeader({
             <LayoutGrid className="h-4 w-4 text-cyan-400" />
             <span className="text-white font-semibold">RN Planner</span>
             <span>/</span>
-            <span className="text-cyan-400">Azure DevOps Board</span>
+            <span className="text-cyan-400">Sprint Ativa</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white mt-1">
             Quadro de Execução & Tarefas
@@ -74,7 +74,7 @@ export function KanbanHeader({
         </div>
       </div>
 
-      {/* Filter / Command Bar (Azure DevOps style) */}
+      {/* Barra de Busca e Filtros */}
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between bg-[#0b0f1a] p-2.5 rounded-xl border border-white/10">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">

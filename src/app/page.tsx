@@ -6,7 +6,7 @@ import { KanbanHeader } from "@/components/kanban/kanban-header";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { NewCardDialog } from "@/components/kanban/new-card-dialog";
 import { KanbanColumn } from "@/types/planner";
-import { Code2, Sparkles } from "lucide-react";
+import { Code2 } from "lucide-react";
 
 export default function PlannerPage() {
   const {
@@ -43,7 +43,7 @@ export default function PlannerPage() {
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
           <span className="text-xs uppercase tracking-widest font-mono">
-            Carregando Azure Board...
+            Carregando RN Planner...
           </span>
         </div>
       </div>
@@ -59,7 +59,7 @@ export default function PlannerPage() {
       </div>
 
       <main className="relative mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 flex flex-col gap-6 flex-1">
-        {/* Header Azure DevOps */}
+        {/* Header do Board */}
         <KanbanHeader
           tasks={allTasks}
           searchQuery={searchQuery}
@@ -85,7 +85,7 @@ export default function PlannerPage() {
         <footer className="mt-auto flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-4 text-xs text-slate-500 sm:flex-row">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-cyan-400" />
-            <span>RN Planner • Azure DevOps Agile Board</span>
+            <span>RN Planner • Personal Workspace</span>
           </div>
 
           <div className="flex items-center gap-4">

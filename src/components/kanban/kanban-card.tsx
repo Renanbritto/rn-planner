@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PlannerTask, Priority, TaskCategory } from "@/types/planner";
-import { Calendar, Trash2, AlertCircle, GripVertical } from "lucide-react";
+import { Calendar, Trash2, GripVertical } from "lucide-react";
 
 interface KanbanCardProps {
   task: PlannerTask;
@@ -28,7 +28,7 @@ export function KanbanCard({
   const [isDragging, setIsDragging] = useState(false);
   const categoryInfo = CATEGORY_MAP[task.category] || CATEGORY_MAP.work;
 
-  // Cor do Stripe Lateral (estilo Azure DevOps)
+  // Indicador de prioridade na borda lateral
   const borderStripeColor =
     task.priority === "critical"
       ? "border-l-rose-500"

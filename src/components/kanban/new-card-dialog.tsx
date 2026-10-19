@@ -68,7 +68,7 @@ export function NewCardDialog({
       <DialogContent className="border-white/10 bg-[#0b0f1a] text-slate-100 sm:max-w-[480px] shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
-            <span>Novo Work Item / Card</span>
+            <span>Novo Card</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -90,7 +90,7 @@ export function NewCardDialog({
           {/* Descrição */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-medium text-slate-300">
-              Descrição / Critérios de Aceite (opcional)
+              Descrição (opcional)
             </label>
             <textarea
               rows={2}
