@@ -2,10 +2,37 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --font-sans: var(--font-comfortaa), system-ui, -apple-system, sans-serif;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0891b2;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
+  --destructive: #e11d48;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: rgba(0, 0, 0, 0.1);
+  --ring: #0891b2;
+  --radius: 0.75rem;
+
+  --neon-rose: #f43f5e;
+  --neon-amber: #f59e0b;
+  --neon-cyan: #06b6d4;
+  --neon-emerald: #10b981;
+}
+
+.dark {
   --background: #090d16;
   --foreground: #f8fafc;
   --card: #0b0f1a;
@@ -24,12 +51,6 @@
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.1);
   --ring: #06b6d4;
-  --radius: 0.75rem;
-
-  --neon-rose: #f43f5e;
-  --neon-amber: #f59e0b;
-  --neon-cyan: #06b6d4;
-  --neon-emerald: #10b981;
 }
 
 @theme inline {
@@ -62,30 +83,11 @@
 }
 
 @layer base {
-  * {
-    border-color: rgba(255, 255, 255, 0.1);
-  }
   body {
     font-family: var(--font-comfortaa), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-color: #090d16;
-    color: #f8fafc;
-    min-height: 100vh;
     font-feature-settings: "rlig" 1, "calt" 1;
     overflow-x: hidden;
   }
-}
-
-/* Glass & Obsidian Surfaces */
-.obsidian-surface {
-  background-color: rgba(11, 15, 26, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.obsidian-surface:hover {
-  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Custom Scrollbar */
@@ -94,12 +96,18 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(148, 163, 184, 0.25);
   border-radius: 9999px;
 }
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
 ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.22);
 }

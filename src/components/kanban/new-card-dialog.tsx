@@ -64,9 +64,9 @@ export function NewCardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border border-white/10 bg-[#0b0f1a] backdrop-blur-2xl text-slate-100 sm:max-w-[480px] shadow-2xl rounded-2xl">
+      <DialogContent className="border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a] backdrop-blur-2xl text-slate-900 dark:text-slate-100 sm:max-w-[480px] shadow-2xl rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
+          <DialogTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span>Novo Card</span>
           </DialogTitle>
         </DialogHeader>
@@ -74,21 +74,21 @@ export function NewCardDialog({
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           {/* Título */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-300">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Título da Tarefa
             </label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Treinar modelo XGBoost ou Refatorar queries"
-              className="bg-[#090d16] border-white/10 hover:border-white/20 text-xs text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
+              className="bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
               autoFocus
             />
           </div>
 
           {/* Descrição */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-300">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
               Descrição (opcional)
             </label>
             <textarea
@@ -96,20 +96,20 @@ export function NewCardDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detalhes técnicos ou escopo da tarefa..."
-              className="rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] p-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 resize-none"
+              className="rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 resize-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {/* Coluna Inicial */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-300">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 Coluna Inicial
               </label>
               <select
                 value={column}
                 onChange={(e) => setColumn(e.target.value as KanbanColumn)}
-                className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
+                className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
               >
                 <option value="todo">A Fazer</option>
                 <option value="in_progress">Em Andamento</option>
@@ -120,13 +120,13 @@ export function NewCardDialog({
 
             {/* Prioridade */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-300">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 Prioridade
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as Priority)}
-                className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
+                className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
               >
                 <option value="critical">Crítica (Urgente)</option>
                 <option value="medium">Média (Padrão)</option>
@@ -138,13 +138,13 @@ export function NewCardDialog({
           <div className="grid grid-cols-2 gap-3">
             {/* Categoria */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-300">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 Categoria
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as TaskCategory)}
-                className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
+                className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
               >
                 <option value="work">Tech / Trabalho</option>
                 <option value="study">Estudo</option>
@@ -156,14 +156,14 @@ export function NewCardDialog({
 
             {/* Data de Entrega */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-300">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 Data Alvo
               </label>
               <Input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="bg-[#090d16] border-white/10 hover:border-white/20 text-xs text-white focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
+                className="bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
               />
             </div>
           </div>
@@ -172,13 +172,13 @@ export function NewCardDialog({
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="h-8 px-3 rounded-xl text-xs font-medium text-slate-400 hover:text-white bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all cursor-pointer"
+              className="h-8 px-3 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.03] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="h-8 px-4 rounded-xl text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.15] text-cyan-300 border border-cyan-500/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)] transition-all cursor-pointer"
+              className="h-8 px-4 rounded-xl text-xs font-semibold bg-cyan-50 hover:bg-cyan-100 dark:bg-white/[0.08] dark:hover:bg-white/[0.15] text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)] transition-all cursor-pointer"
             >
               Criar Card
             </button>

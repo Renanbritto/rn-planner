@@ -12,11 +12,11 @@ interface KanbanCardProps {
 }
 
 const CATEGORY_MAP: Record<TaskCategory, { label: string; bg: string; text: string }> = {
-  work: { label: "Tech / Trabalho", bg: "bg-cyan-500/10 border-cyan-500/20", text: "text-cyan-400" },
-  study: { label: "Estudo", bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-400" },
-  health: { label: "Saúde / Treino", bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-400" },
-  finance: { label: "Finanças", bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-400" },
-  personal: { label: "Pessoal", bg: "bg-white/[0.04] border-white/10", text: "text-slate-300" },
+  work: { label: "Tech / Trabalho", bg: "bg-cyan-500/10 border-cyan-500/20", text: "text-cyan-700 dark:text-cyan-400" },
+  study: { label: "Estudo", bg: "bg-amber-500/10 border-amber-500/20", text: "text-amber-700 dark:text-amber-400" },
+  health: { label: "Saúde / Treino", bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-700 dark:text-emerald-400" },
+  finance: { label: "Finanças", bg: "bg-emerald-500/10 border-emerald-500/20", text: "text-emerald-700 dark:text-emerald-400" },
+  personal: { label: "Pessoal", bg: "bg-slate-100 dark:bg-white/[0.04] border-slate-200 dark:border-white/10", text: "text-slate-700 dark:text-slate-300" },
 };
 
 export function KanbanCard({
@@ -53,37 +53,37 @@ export function KanbanCard({
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      className={`group relative flex flex-col justify-between rounded-xl border border-white/10 bg-[#0b0f1a] backdrop-blur-2xl p-3.5 shadow-sm transition-all duration-200 cursor-grab active:cursor-grabbing border-l-4 ${borderStripeColor} ${
+      className={`group relative flex flex-col justify-between rounded-xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0b0f1a] backdrop-blur-2xl p-3.5 shadow-xs transition-all duration-200 cursor-grab active:cursor-grabbing border-l-4 ${borderStripeColor} ${
         isDragging
           ? "opacity-40 scale-95 border-dashed border-cyan-500/50"
-          : "hover:border-white/20 hover:bg-[#101626] hover:shadow-lg hover:shadow-black/40"
+          : "hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50/80 dark:hover:bg-[#101626] hover:shadow-md hover:shadow-black/5 dark:hover:shadow-black/40"
       }`}
     >
       {/* Header do Card: Código & Ações */}
       <div className="flex items-center justify-between text-xs mb-1.5">
         <div className="flex items-center gap-1.5">
-          <GripVertical className="h-3.5 w-3.5 text-slate-600 group-hover:text-slate-400 transition-colors" />
-          <span className="font-mono text-[11px] font-semibold text-slate-400">
+          <GripVertical className="h-3.5 w-3.5 text-slate-400 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors" />
+          <span className="font-mono text-[11px] font-semibold text-slate-500 dark:text-slate-400">
             {task.code}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
           {task.priority === "critical" && (
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded-lg border border-rose-500/20">
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded-lg border border-rose-500/20">
               <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
               Crítico
             </span>
           )}
           {task.priority === "medium" && (
-            <span className="text-[10px] font-medium text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-lg border border-amber-500/20">
+            <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-lg border border-amber-500/20">
               Média
             </span>
           )}
 
           <button
             onClick={() => onDelete(task.id)}
-            className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 p-1 rounded-lg transition-all cursor-pointer"
+            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 p-1 rounded-lg transition-all cursor-pointer"
             title="Excluir card"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -92,19 +92,19 @@ export function KanbanCard({
       </div>
 
       {/* Título Principal */}
-      <h3 className="text-sm font-medium leading-snug text-slate-100 group-hover:text-white transition-colors">
+      <h3 className="text-sm font-medium leading-snug text-slate-900 dark:text-slate-100 group-hover:text-slate-950 dark:group-hover:text-white transition-colors">
         {task.title}
       </h3>
 
       {/* Descrição Opcional */}
       {task.description && (
-        <p className="mt-1.5 text-xs text-slate-400 line-clamp-2 leading-relaxed">
+        <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
           {task.description}
         </p>
       )}
 
       {/* Rodapé do Card: Categoria & Data */}
-      <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-2 text-[11px]">
+      <div className="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-2 text-[11px]">
         <span
           className={`rounded-lg border px-2 py-0.5 font-medium ${categoryInfo.bg} ${categoryInfo.text}`}
         >
@@ -112,7 +112,7 @@ export function KanbanCard({
         </span>
 
         {task.dueDate && (
-          <div className="flex items-center gap-1 text-slate-400">
+          <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
             <Calendar className="h-3 w-3" />
             <span>{task.dueDate.split("-").reverse().slice(0, 2).join("/")}</span>
           </div>
