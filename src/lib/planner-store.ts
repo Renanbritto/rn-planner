@@ -1,144 +1,91 @@
 ﻿"use client";
 
 import { useState, useEffect } from "react";
-import { PlannerTask, Habit, Goal, QuickNote } from "@/types/planner";
-import { supabase, isSupabaseConfigured } from "./supabase";
+import { PlannerTask, KanbanColumn, Priority, TaskCategory } from "@/types/planner";
+import { isSupabaseConfigured } from "./supabase";
 
-const DEFAULT_TASKS: PlannerTask[] = [
+const INITIAL_TASKS: PlannerTask[] = [
   {
-    id: "task-1",
+    id: "t-1",
+    code: "RN-101",
     title: "Revisar pipeline de inferência & métricas do Sentinel",
+    description: "Validar taxa de falso positivos e latência média em produção.",
     category: "work",
     priority: "critical",
+    column: "in_progress",
     dueDate: new Date().toISOString().split("T")[0],
-    completed: false,
     createdAt: new Date().toISOString(),
+    order: 0,
   },
   {
-    id: "task-2",
-    title: "Otimizar consultas Drizzle & arquitetura do banco",
+    id: "t-2",
+    code: "RN-102",
+    title: "Otimizar consultas Drizzle & índices do banco",
+    description: "Adicionar índices parciais nas queries mais lentas.",
     category: "work",
     priority: "medium",
+    column: "done",
     dueDate: new Date().toISOString().split("T")[0],
-    completed: true,
     createdAt: new Date().toISOString(),
+    order: 0,
   },
   {
-    id: "task-3",
+    id: "t-3",
+    code: "RN-103",
     title: "Estudo: Deep dive em Causal Inference & Estatística",
+    description: "Ler capítulo 4 sobre Do-calculus e DAGs causais.",
     category: "study",
     priority: "medium",
+    column: "todo",
     dueDate: new Date().toISOString().split("T")[0],
-    completed: false,
     createdAt: new Date().toISOString(),
+    order: 0,
   },
   {
-    id: "task-4",
-    title: "Treino de força & mobilidade (1h)",
+    id: "t-4",
+    code: "RN-104",
+    title: "Treino de Força & Mobilidade (1h)",
+    description: "Foco em membros superiores e liberação miofascial.",
     category: "health",
     priority: "low",
+    column: "todo",
     dueDate: new Date().toISOString().split("T")[0],
-    completed: false,
     createdAt: new Date().toISOString(),
-  },
-];
-
-const DEFAULT_HABITS: Habit[] = [
-  {
-    id: "h-1",
-    name: "Treino / Academia",
-    category: "health",
-    targetDaysPerWeek: 5,
-    streak: 6,
-    completedDates: [new Date().toISOString().split("T")[0]],
+    order: 1,
   },
   {
-    id: "h-2",
-    name: "Deep Work (Foco sem distrações > 2h)",
-    category: "work",
-    targetDaysPerWeek: 6,
-    streak: 12,
-    completedDates: [new Date().toISOString().split("T")[0]],
-  },
-  {
-    id: "h-3",
-    name: "Leitura Técnica ou Paper (30 min)",
-    category: "study",
-    targetDaysPerWeek: 5,
-    streak: 4,
-    completedDates: [],
-  },
-  {
-    id: "h-4",
-    name: "Hidratação (3 Litros)",
-    category: "health",
-    targetDaysPerWeek: 7,
-    streak: 18,
-    completedDates: [new Date().toISOString().split("T")[0]],
-  },
-];
-
-const DEFAULT_GOALS: Goal[] = [
-  {
-    id: "g-1",
-    title: "Lançamento do ecossistema RN Suite & Portfólio IA",
-    targetDate: "2026-12-31",
-    progress: 75,
-    metricLabel: "3 de 4 projetos finalizados",
-    category: "work",
-  },
-  {
-    id: "g-2",
-    title: "Consistência de Treino & Saúde",
-    targetDate: "2026-11-30",
-    progress: 88,
-    metricLabel: "22/25 treinos no mês",
-    category: "health",
-  },
-  {
-    id: "g-3",
-    title: "Reserva de Emergência & Aportes Estratégicos",
-    targetDate: "2026-12-31",
-    progress: 60,
-    metricLabel: "60% da meta anual",
+    id: "t-5",
+    code: "RN-105",
+    title: "Ajustar alocação de aportes do mês",
+    description: "Transferir reserva estratégica e rebalancear carteira.",
     category: "finance",
-  },
-];
-
-const DEFAULT_NOTES: QuickNote[] = [
-  {
-    id: "n-1",
-    content: "💡 Ideia: adicionar widget de resumo semanal com taxa de conclusão e heatmap de produtividade.",
-    createdAt: "Hoje às 14:20",
-  },
-  {
-    id: "n-2",
-    content: "📌 Regra de ouro: Primeiro bloco da manhã sempre reservado para a tarefa de maior alavancagem.",
-    createdAt: "Ontem às 09:15",
+    priority: "critical",
+    column: "blocked",
+    dueDate: new Date().toISOString().split("T")[0],
+    createdAt: new Date().toISOString(),
+    order: 0,
   },
 ];
 
 export function usePlanner() {
-  const [tasks, setTasks] = useState<PlannerTask[]>(DEFAULT_TASKS);
-  const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
-  const [goals, setGoals] = useState<Goal[]>(DEFAULT_GOALS);
-  const [notes, setNotes] = useState<QuickNote[]>(DEFAULT_NOTES);
+  const [tasks, setTasks] = useState<PlannerTask[]>(INITIAL_TASKS);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
 
-  // Carrega do LocalStorage na inicialização
+  // Carrega do LocalStorage na montagem
   useEffect(() => {
     try {
-      const storedTasks = localStorage.getItem("rn_planner_tasks");
-      const storedHabits = localStorage.getItem("rn_planner_habits");
-      const storedGoals = localStorage.getItem("rn_planner_goals");
-      const storedNotes = localStorage.getItem("rn_planner_notes");
-
-      if (storedTasks) setTasks(JSON.parse(storedTasks));
-      if (storedHabits) setHabits(JSON.parse(storedHabits));
-      if (storedGoals) setGoals(JSON.parse(storedGoals));
-      if (storedNotes) setNotes(JSON.parse(storedNotes));
+      const stored = localStorage.getItem("rn_planner_board_tasks");
+      if (stored) {
+        const parsed: PlannerTask[] = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTasks(parsed);
+        }
+      }
     } catch (e) {
-      console.warn("Erro ao ler localStorage", e);
+      console.warn("Erro ao ler localStorage do board", e);
     } finally {
       setIsLoaded(true);
     }
@@ -148,89 +95,102 @@ export function usePlanner() {
   useEffect(() => {
     if (!isLoaded) return;
     try {
-      localStorage.setItem("rn_planner_tasks", JSON.stringify(tasks));
-      localStorage.setItem("rn_planner_habits", JSON.stringify(habits));
-      localStorage.setItem("rn_planner_goals", JSON.stringify(goals));
-      localStorage.setItem("rn_planner_notes", JSON.stringify(notes));
+      localStorage.setItem("rn_planner_board_tasks", JSON.stringify(tasks));
     } catch (e) {
-      console.warn("Erro ao salvar localStorage", e);
+      console.warn("Erro ao salvar localStorage do board", e);
     }
-  }, [tasks, habits, goals, notes, isLoaded]);
+  }, [tasks, isLoaded]);
 
-  // Ações de Tarefas
-  const toggleTask = (id: string) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
+  // Mover tarefa entre colunas (Drag & Drop)
+  const moveTask = (taskId: string, targetColumn: KanbanColumn, targetIndex?: number) => {
+    setTasks((prev) => {
+      const targetTask = prev.find((t) => t.id === taskId);
+      if (!targetTask) return prev;
+
+      const remaining = prev.filter((t) => t.id !== taskId);
+      const updatedTask: PlannerTask = {
+        ...targetTask,
+        column: targetColumn,
+      };
+
+      if (typeof targetIndex === "number") {
+        // Encontra o index absoluto na lista filtrada pela coluna
+        const columnTasks = remaining.filter((t) => t.column === targetColumn);
+        const insertBeforeTask = columnTasks[targetIndex];
+
+        if (insertBeforeTask) {
+          const insertIdx = remaining.indexOf(insertBeforeTask);
+          remaining.splice(insertIdx, 0, updatedTask);
+          return [...remaining];
+        }
+      }
+
+      return [...remaining, updatedTask];
+    });
   };
 
-  const addTask = (task: Omit<PlannerTask, "id" | "createdAt">) => {
+  // Adicionar nova tarefa
+  const addTask = (data: {
+    title: string;
+    description?: string;
+    category: TaskCategory;
+    priority: Priority;
+    column: KanbanColumn;
+    dueDate: string;
+  }) => {
+    const nextNumber = tasks.length + 101;
     const newTask: PlannerTask = {
-      ...task,
-      id: "task-" + Date.now(),
+      ...data,
+      id: "t-" + Date.now(),
+      code: `RN-${nextNumber}`,
       createdAt: new Date().toISOString(),
+      order: tasks.filter((t) => t.column === data.column).length,
     };
     setTasks((prev) => [newTask, ...prev]);
   };
 
+  // Excluir tarefa
   const deleteTask = (id: string) => {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Ações de Hábitos
-  const toggleHabitToday = (id: string) => {
-    const today = new Date().toISOString().split("T")[0];
-    setHabits((prev) =>
-      prev.map((h) => {
-        if (h.id !== id) return h;
-        const hasCompletedToday = h.completedDates.includes(today);
-        let newDates: string[];
-        let newStreak = h.streak;
-
-        if (hasCompletedToday) {
-          newDates = h.completedDates.filter((d) => d !== today);
-          newStreak = Math.max(0, h.streak - 1);
-        } else {
-          newDates = [...h.completedDates, today];
-          newStreak = h.streak + 1;
-        }
-
-        return {
-          ...h,
-          completedDates: newDates,
-          streak: newStreak,
-        };
-      })
+  // Atualizar tarefa
+  const updateTask = (id: string, updates: Partial<PlannerTask>) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
     );
   };
 
-  // Ações de Notas Rápidas
-  const addNote = (content: string) => {
-    if (!content.trim()) return;
-    const newNote: QuickNote = {
-      id: "note-" + Date.now(),
-      content,
-      createdAt: "Hoje às " + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
-    };
-    setNotes((prev) => [newNote, ...prev]);
-  };
+  // Tarefas filtradas
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch =
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const deleteNote = (id: string) => {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
-  };
+    const matchesCategory =
+      categoryFilter === "all" || task.category === categoryFilter;
+
+    const matchesPriority =
+      priorityFilter === "all" || task.priority === priorityFilter;
+
+    return matchesSearch && matchesCategory && matchesPriority;
+  });
 
   return {
-    tasks,
-    habits,
-    goals,
-    notes,
+    tasks: filteredTasks,
+    allTasks: tasks,
     isLoaded,
     isCloudConnected: isSupabaseConfigured,
-    toggleTask,
+    searchQuery,
+    setSearchQuery,
+    categoryFilter,
+    setCategoryFilter,
+    priorityFilter,
+    setPriorityFilter,
+    moveTask,
     addTask,
     deleteTask,
-    toggleHabitToday,
-    addNote,
-    deleteNote,
+    updateTask,
   };
 }
