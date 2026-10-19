@@ -52,10 +52,10 @@ export function KanbanColumn({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`flex flex-col rounded-2xl border p-4 transition-all duration-200 min-h-[580px] ${
+      className={`flex flex-col rounded-2xl border p-4 transition-all duration-200 min-h-[580px] backdrop-blur-2xl ${
         isOver
-          ? "border-cyan-500/60 bg-[#0d1424] shadow-xl shadow-cyan-500/10"
-          : "border-white/10 bg-[#0b0f1a]/60"
+          ? "border-cyan-500/50 bg-[#0d1424] shadow-xl shadow-cyan-500/10"
+          : "border-white/10 hover:border-white/20 bg-[#0b0f1a]"
       }`}
     >
       {/* Cabeçalho da Coluna */}
@@ -66,7 +66,7 @@ export function KanbanColumn({
             {column.title}
           </h2>
           <span
-            className={`rounded-full px-2 py-0.5 text-xs font-mono font-bold ${column.badgeBg} text-white`}
+            className={`rounded-lg px-2 py-0.5 text-xs font-mono font-bold ${column.badgeBg}`}
           >
             {tasks.length}
           </span>
@@ -74,7 +74,7 @@ export function KanbanColumn({
 
         <button
           onClick={() => onQuickAdd(column.id)}
-          className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-400 hover:border-cyan-400/50 hover:bg-cyan-500/10 hover:text-cyan-300 transition-all"
+          className="flex h-7 w-7 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-white transition-all cursor-pointer"
           title={`Adicionar item em ${column.title}`}
         >
           <Plus className="h-4 w-4" />

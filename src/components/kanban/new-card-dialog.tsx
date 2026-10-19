@@ -10,7 +10,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 interface NewCardDialogProps {
   open: boolean;
@@ -65,9 +64,9 @@ export function NewCardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-white/10 bg-[#0b0f1a] text-slate-100 sm:max-w-[480px] shadow-2xl">
+      <DialogContent className="border border-white/10 bg-[#0b0f1a] backdrop-blur-2xl text-slate-100 sm:max-w-[480px] shadow-2xl rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+          <DialogTitle className="text-base font-bold text-white flex items-center gap-2">
             <span>Novo Card</span>
           </DialogTitle>
         </DialogHeader>
@@ -82,7 +81,7 @@ export function NewCardDialog({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Treinar modelo XGBoost ou Refatorar queries"
-              className="bg-[#090d16] border-white/10 text-sm text-white placeholder:text-slate-500 focus-visible:ring-cyan-500"
+              className="bg-[#090d16] border-white/10 hover:border-white/20 text-xs text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
               autoFocus
             />
           </div>
@@ -97,7 +96,7 @@ export function NewCardDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detalhes técnicos ou escopo da tarefa..."
-              className="rounded-md border border-white/10 bg-[#090d16] p-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 resize-none"
+              className="rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] p-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 resize-none"
             />
           </div>
 
@@ -110,7 +109,7 @@ export function NewCardDialog({
               <select
                 value={column}
                 onChange={(e) => setColumn(e.target.value as KanbanColumn)}
-                className="h-9 rounded-md border border-white/10 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
               >
                 <option value="todo">A Fazer</option>
                 <option value="in_progress">Em Andamento</option>
@@ -127,7 +126,7 @@ export function NewCardDialog({
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as Priority)}
-                className="h-9 rounded-md border border-white/10 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
               >
                 <option value="critical">Crítica (Urgente)</option>
                 <option value="medium">Média (Padrão)</option>
@@ -145,7 +144,7 @@ export function NewCardDialog({
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as TaskCategory)}
-                className="h-9 rounded-md border border-white/10 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
               >
                 <option value="work">Tech / Trabalho</option>
                 <option value="study">Estudo</option>
@@ -164,28 +163,25 @@ export function NewCardDialog({
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="bg-[#090d16] border-white/10 text-xs text-white focus-visible:ring-cyan-500"
+                className="bg-[#090d16] border-white/10 hover:border-white/20 text-xs text-white focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
               />
             </div>
           </div>
 
           <DialogFooter className="mt-4 flex gap-2 sm:justify-end">
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               onClick={() => onOpenChange(false)}
-              className="border-white/10 text-slate-300 hover:bg-white/5"
+              className="h-8 px-3 rounded-xl text-xs font-medium text-slate-400 hover:text-white bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all cursor-pointer"
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
-              size="sm"
-              className="bg-cyan-500 text-black hover:bg-cyan-400 font-semibold"
+              className="h-8 px-4 rounded-xl text-xs font-semibold bg-white/[0.08] hover:bg-white/[0.15] text-cyan-300 border border-cyan-500/30 hover:border-cyan-400/60 hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)] transition-all cursor-pointer"
             >
               Criar Card
-            </Button>
+            </button>
           </DialogFooter>
         </form>
       </DialogContent>
