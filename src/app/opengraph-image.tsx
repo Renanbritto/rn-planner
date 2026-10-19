@@ -1,6 +1,6 @@
 ﻿import { ImageResponse } from "next/og";
 
-export const alt = "RN Planner | Personal Operating System";
+export const alt = "Planner | Personal Operating System";
 export const size = {
   width: 1200,
   height: 630,
@@ -34,24 +34,19 @@ export default async function Image() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              gap: "6px",
             }}
           >
-            <span
-              style={{
-                fontSize: "26px",
-                fontWeight: "bold",
-                color: "#06b6d4",
-              }}
-            >
-              RN
-            </span>
+            <div style={{ width: "6px", height: "18px", borderRadius: "3px", backgroundColor: "#64748b" }} />
+            <div style={{ width: "6px", height: "30px", borderRadius: "3px", backgroundColor: "#06b6d4" }} />
+            <div style={{ width: "6px", height: "20px", borderRadius: "3px", backgroundColor: "#10b981" }} />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "28px", fontWeight: "bold", color: "#f8fafc" }}>
-              RN Planner
+            <span style={{ fontSize: "32px", fontWeight: "bold", color: "#f8fafc", letterSpacing: "-0.5px" }}>
+              planner
             </span>
-            <span style={{ fontSize: "14px", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "2px" }}>
+            <span style={{ fontSize: "13px", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "2px" }}>
               Personal Operating System
             </span>
           </div>

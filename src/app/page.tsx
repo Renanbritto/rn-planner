@@ -43,7 +43,7 @@ export default function PlannerPage() {
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
           <span className="text-xs uppercase tracking-widest font-mono">
-            Carregando RN Planner...
+            Carregando Planner...
           </span>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function PlannerPage() {
         <footer className="mt-auto flex flex-col items-center justify-between gap-4 border-t border-slate-200 dark:border-white/10 pt-4 text-xs text-slate-500 sm:flex-row">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-cyan-500 dark:bg-cyan-400" />
-            <span>RN Planner • Personal Workspace</span>
+            <span>planner • Personal Workspace</span>
           </div>
 
           <div className="flex items-center gap-4">
