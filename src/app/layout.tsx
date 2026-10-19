@@ -13,9 +13,9 @@ const comfortaa = Comfortaa({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://rn-planner.vercel.app"),
-  title: "RN Planner | Personal Operating System",
+  title: "planner | Personal Operating System",
   description:
-    "Quadro de execução pessoal com arrastar e soltar, foco diário, prioridades e métricas. Minimalismo Obsidian com semântica Neon.",
+    "Quadro de execução pessoal com arrastar e soltar, foco diário, prioridades e métricas.",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
@@ -26,17 +26,17 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "RN Planner | Personal Operating System",
+    title: "planner | Personal Operating System",
     description:
       "Quadro de execução pessoal com arrastar e soltar, foco diário, prioridades e métricas.",
     url: "https://rn-planner.vercel.app",
-    siteName: "RN Planner",
+    siteName: "planner",
     locale: "pt_BR",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "RN Planner | Personal Operating System",
+    title: "planner | Personal Operating System",
     description:
       "Quadro de execução pessoal com arrastar e soltar, foco diário, prioridades e métricas.",
   },

@@ -14,62 +14,59 @@ export function BrandLogo({
   showText = true,
 }: BrandLogoProps) {
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      {/* Ícone Minimalista Geométrico RN */}
+    <div className={`flex items-center gap-3 select-none ${className}`}>
+      {/* Símbolo Abstrato Geométrico (Estilo Linear / Board de Execução) */}
       <svg
         width={size}
         height={size}
         viewBox="0 0 40 40"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 transition-transform hover:scale-105"
+        className="shrink-0 transition-transform duration-200 hover:scale-105"
       >
+        {/* Superfície do Ícone */}
         <rect
           width="40"
           height="40"
-          rx="10"
-          className="fill-[#0c111d] dark:fill-[#0c101d] stroke-slate-200 dark:stroke-white/10"
+          rx="12"
+          className="fill-slate-100 dark:fill-[#0c101d] stroke-slate-200 dark:stroke-white/10"
           strokeWidth="1.5"
         />
-        {/* Traço Geométrico 'R' e 'N' */}
-        <path
-          d="M12 28V12H18C20.2091 12 22 13.7909 22 16C22 18.2091 20.2091 20 18 20H12"
-          className="stroke-cyan-500 dark:stroke-cyan-400"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+
+        {/* 3 Barras Minimalistas do Quadro de Execução */}
+        <rect
+          x="11"
+          y="15"
+          width="4.5"
+          height="11"
+          rx="2.25"
+          className="fill-slate-400 dark:fill-slate-600"
         />
-        <path
-          d="M17 20L22 28"
-          className="stroke-cyan-500 dark:stroke-cyan-400"
-          strokeWidth="2.5"
-          strokeLinecap="round"
+        <rect
+          x="18"
+          y="10"
+          width="4.5"
+          height="20"
+          rx="2.25"
+          className="fill-cyan-600 dark:fill-cyan-400"
         />
-        <path
-          d="M24 28V12L30 28V12"
-          className="stroke-slate-700 dark:stroke-slate-200"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <rect
+          x="25"
+          y="17"
+          width="4.5"
+          height="13"
+          rx="2.25"
+          className="fill-emerald-600 dark:fill-emerald-400"
         />
-        {/* Ponto de foco Neon */}
-        <circle cx="30" cy="12" r="2" className="fill-cyan-400" />
       </svg>
 
-      {/* Tipografia da Marca */}
+      {/* Tipografia em Comfortaa */}
       {showText && (
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1.5 leading-none">
-            <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
-              RN
-            </span>
-            <span className="text-base font-light text-slate-600 dark:text-slate-400">
-              Planner
-            </span>
-          </div>
-          <span className="text-[10px] tracking-wider text-slate-400 dark:text-slate-500 uppercase mt-0.5 font-mono">
-            OS • Board
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+            planner
           </span>
+          <span className="h-1.5 w-1.5 rounded-full bg-cyan-600 dark:bg-cyan-400" />
         </div>
       )}
     </div>
