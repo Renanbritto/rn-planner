@@ -3,7 +3,7 @@
 import { Search, Plus, LayoutGrid, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { PlannerTask } from "@/types/planner";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface KanbanHeaderProps {
   tasks: PlannerTask[];
@@ -31,17 +31,17 @@ export function KanbanHeader({
   const doneCount = tasks.filter((t) => t.column === "done").length;
 
   return (
-    <div className="flex flex-col gap-4 border-b border-white/10 pb-5">
+    <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
       {/* Top Row: Title & Action */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-            <LayoutGrid className="h-4 w-4 text-cyan-400" />
-            <span className="text-white font-semibold">RN Planner</span>
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400">
+            <LayoutGrid className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+            <span className="text-slate-900 dark:text-white font-semibold">RN Planner</span>
             <span>/</span>
-            <span className="text-cyan-400">Sprint Ativa</span>
+            <span className="text-cyan-600 dark:text-cyan-400">Sprint Ativa</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
             Quadro de Execução & Tarefas
           </h1>
         </div>
@@ -50,41 +50,44 @@ export function KanbanHeader({
         <div className="flex items-center gap-3">
           {/* Status Badges */}
           <div className="hidden md:flex items-center gap-2 text-xs">
-            <div className="flex items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-rose-400 font-medium">
+            <div className="flex items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-rose-600 dark:text-rose-400 font-medium">
               <AlertCircle className="h-3.5 w-3.5" />
               <span>{criticalCount} Críticos</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-cyan-400 font-medium">
+            <div className="flex items-center gap-1.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-cyan-600 dark:text-cyan-400 font-medium">
               <Clock className="h-3.5 w-3.5" />
               <span>{inProgressCount} Ativos</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-400 font-medium">
+            <div className="flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 font-medium">
               <CheckCircle2 className="h-3.5 w-3.5" />
               <span>{doneCount} Concluídos</span>
             </div>
           </div>
 
-          {/* Botão Novo Card com Estilo Obsidian */}
+          {/* Alternador de Tema (Claro / Obsidian) */}
+          <ThemeToggle />
+
+          {/* Botão Novo Card */}
           <button
             onClick={onOpenNewCard}
-            className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/10 hover:border-cyan-400/40 hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.25)] transition-all cursor-pointer"
+            className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold bg-white/[0.8] hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 dark:hover:border-cyan-400/40 hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.25)] transition-all cursor-pointer shadow-sm"
           >
-            <Plus className="h-4 w-4 text-cyan-400" />
+            <Plus className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
             <span>Novo Card</span>
           </button>
         </div>
       </div>
 
-      {/* Barra de Busca e Filtros - Superfície #0b0f1a */}
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between bg-[#0b0f1a] backdrop-blur-2xl p-2.5 rounded-2xl border border-white/10 hover:border-white/20 transition-colors">
+      {/* Barra de Busca e Filtros */}
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between bg-white/70 dark:bg-[#0b0f1a] backdrop-blur-2xl p-2.5 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Filtrar por título, ID ou descrição (#RN-101)..."
-            className="h-9 pl-9 bg-[#090d16] border-white/10 hover:border-white/20 text-xs text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
+            className="h-9 pl-9 bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
           />
         </div>
 
@@ -94,7 +97,7 @@ export function KanbanHeader({
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
+            className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs"
           >
             <option value="all">Todas Categorias</option>
             <option value="work">Tech / Trabalho</option>
@@ -108,7 +111,7 @@ export function KanbanHeader({
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
+            className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs"
           >
             <option value="all">Todas Prioridades</option>
             <option value="critical">Crítica</option>

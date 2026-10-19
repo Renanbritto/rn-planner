@@ -52,17 +52,17 @@ export function KanbanColumn({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`flex flex-col rounded-2xl border p-4 transition-all duration-200 min-h-[580px] backdrop-blur-2xl ${
+      className={`flex flex-col rounded-2xl border p-4 transition-all duration-200 min-h-[580px] backdrop-blur-2xl shadow-xs ${
         isOver
-          ? "border-cyan-500/50 bg-[#0d1424] shadow-xl shadow-cyan-500/10"
-          : "border-white/10 hover:border-white/20 bg-[#0b0f1a]"
+          ? "border-cyan-500/50 bg-cyan-50/60 dark:bg-[#0d1424] shadow-xl shadow-cyan-500/10"
+          : "border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-100/70 dark:bg-[#0b0f1a]"
       }`}
     >
       {/* Cabeçalho da Coluna */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3 mb-3">
         <div className="flex items-center gap-2">
           <span className={`h-2.5 w-2.5 rounded-full ${column.dotColor}`} />
-          <h2 className="text-sm font-semibold text-white tracking-wide">
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-white tracking-wide">
             {column.title}
           </h2>
           <span
@@ -74,7 +74,7 @@ export function KanbanColumn({
 
         <button
           onClick={() => onQuickAdd(column.id)}
-          className="flex h-7 w-7 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-400 hover:border-white/20 hover:bg-white/[0.08] hover:text-white transition-all cursor-pointer"
+          className="flex h-7 w-7 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/[0.04] text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shadow-xs"
           title={`Adicionar item em ${column.title}`}
         >
           <Plus className="h-4 w-4" />
@@ -85,12 +85,12 @@ export function KanbanColumn({
       <div className="flex flex-1 flex-col gap-3">
         {tasks.length === 0 ? (
           <div
-            className={`flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-white/10 p-6 text-center transition-all ${
-              isOver ? "border-cyan-400/40 bg-cyan-500/5" : ""
+            className={`flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300/80 dark:border-white/10 p-6 text-center transition-all ${
+              isOver ? "border-cyan-500/40 bg-cyan-500/5" : ""
             }`}
           >
             <p className="text-xs text-slate-500 font-medium">Nenhum card aqui</p>
-            <p className="text-[11px] text-slate-600 mt-1">Arraste para mover</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-1">Arraste para mover</p>
           </div>
         ) : (
           tasks.map((task) => (
