@@ -1,10 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey =
+function cleanEnv(val?: string) {
+  if (!val) return "";
+  let cleaned = val.trim();
+  if (cleaned.includes("=")) {
+    cleaned = cleaned.split("=").slice(1).join("=").trim();
+  }
+  return cleaned.replace(/^["']|["']$/g, "").trim();
+}
+
+const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const supabaseKey = cleanEnv(
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export const updateSession = async (request: NextRequest) => {
   let supabaseResponse = NextResponse.next({
@@ -12,6 +22,10 @@ export const updateSession = async (request: NextRequest) => {
       headers: request.headers,
     },
   });
+
+  if (!supabaseUrl.startsWith("http") || !supabaseKey) {
+    return supabaseResponse;
+  }
 
   const supabase = createServerClient(
     supabaseUrl,
@@ -36,7 +50,6 @@ export const updateSession = async (request: NextRequest) => {
     },
   );
 
-  // Refresh auth token if expired
   await supabase.auth.getUser();
 
   return supabaseResponse;
