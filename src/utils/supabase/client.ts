@@ -1,5 +1,8 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+const DEFAULT_SUPABASE_URL = "https://vmextlzjsambgblssvkn.supabase.co";
+const DEFAULT_SUPABASE_KEY = "sb_publishable_cOchNUmijXgwu0Vxl-7lOw_OFS-RlIy";
+
 function cleanEnv(val?: string) {
   if (!val) return "";
   let cleaned = val.trim();
@@ -9,15 +12,24 @@ function cleanEnv(val?: string) {
   return cleaned.replace(/^["']|["']$/g, "").trim();
 }
 
-const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
-const supabaseKey = cleanEnv(
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+function cleanUrl(val?: string) {
+  let cleaned = cleanEnv(val);
+  if (!cleaned || cleaned.includes("your-project") || cleaned.includes("your-supabase-url")) {
+    return DEFAULT_SUPABASE_URL;
+  }
+  if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
+    cleaned = `https://${cleaned}`;
+  }
+  return cleaned;
+}
 
 export const createClient = () => {
-  if (!supabaseUrl.startsWith("http")) {
-    throw new Error("Supabase URL must be a valid HTTP or HTTPS URL");
-  }
-  return createBrowserClient(supabaseUrl, supabaseKey);
+  const url = cleanUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const key =
+    cleanEnv(
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ) || DEFAULT_SUPABASE_KEY;
+
+  return createBrowserClient(url, key);
 };

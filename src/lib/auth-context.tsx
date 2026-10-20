@@ -31,7 +31,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Limpa cache legado de simulação offline, se existir
     try {
       localStorage.removeItem("rn_planner_auth_user");
     } catch {
@@ -82,7 +81,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    if (isSupabaseConfigured && supabase) {
+    try {
+      if (!supabase) {
+        alert("Cliente Supabase não inicializado.");
+        return;
+      }
       const redirectUrl = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -94,8 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Erro ao autenticar com Google no Supabase:", error);
         alert(`Erro de autenticação: ${error.message}`);
       }
-    } else {
-      alert("Configuração do Supabase ausente.");
+    } catch (err: any) {
+      console.error("Erro inesperado no login:", err);
+      alert(`Erro inesperado: ${err?.message || err}`);
     }
   };
 
