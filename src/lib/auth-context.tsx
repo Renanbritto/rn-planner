@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase, isSupabaseConfigured } from "./supabase";
@@ -31,14 +31,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Caso o Supabase esteja configurado, ouve o estado do usuário real
+    // Limpa cache legado de simulação offline, se existir
+    try {
+      localStorage.removeItem("rn_planner_auth_user");
+    } catch {
+      // Ignore
+    }
+
     if (isSupabaseConfigured && supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
           setUser({
             id: session.user.id,
             email: session.user.email || "",
-            name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Usuário",
+            name:
+              session.user.user_metadata?.full_name ||
+              session.user.email?.split("@")[0] ||
+              "Usuário",
             avatarUrl: session.user.user_metadata?.avatar_url,
           });
         }
@@ -52,7 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser({
             id: session.user.id,
             email: session.user.email || "",
-            name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Usuário",
+            name:
+              session.user.user_metadata?.full_name ||
+              session.user.email?.split("@")[0] ||
+              "Usuário",
             avatarUrl: session.user.user_metadata?.avatar_url,
           });
         } else {
@@ -65,17 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         subscription.unsubscribe();
       };
     } else {
-      // 2. Fallback local para desenvolvimento/teste offline
-      try {
-        const cached = localStorage.getItem("rn_planner_auth_user");
-        if (cached) {
-          setUser(JSON.parse(cached));
-        }
-      } catch (e) {
-        console.warn("Erro ao ler auth cache local", e);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, []);
 
@@ -89,18 +91,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
       if (error) {
-        console.error("Erro ao autenticar com Google no Supabase", error);
+        console.error("Erro ao autenticar com Google no Supabase:", error);
+        alert(`Erro de autenticação: ${error.message}`);
       }
     } else {
-      // Simulação rápida para dev/teste quando ainda sem chaves da nuvem
-      const demoUser: AuthUser = {
-        id: "usr-" + Date.now(),
-        email: "renan@exemplo.com",
-        name: "Renan Britto",
-        avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-      };
-      setUser(demoUser);
-      localStorage.setItem("rn_planner_auth_user", JSON.stringify(demoUser));
+      alert("Configuração do Supabase ausente.");
     }
   };
 
@@ -109,7 +104,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut();
     }
     setUser(null);
-    localStorage.removeItem("rn_planner_auth_user");
   };
 
   return (
