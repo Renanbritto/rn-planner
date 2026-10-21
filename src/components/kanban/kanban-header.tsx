@@ -1,7 +1,16 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
-import { Search, Plus, AlertCircle, CheckCircle2, Clock, Share2, Check } from "lucide-react";
+import {
+  Search,
+  Plus,
+  AlertCircle,
+  Clock,
+  Share2,
+  Check,
+  Columns3,
+  ListTodo,
+} from "lucide-react";
 import { PlannerTask } from "@/types/planner";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -10,6 +19,7 @@ import { UserButton } from "@/components/auth/user-button";
 
 interface KanbanHeaderProps {
   tasks: PlannerTask[];
+  columnsCount: number;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   categoryFilter: string;
@@ -17,10 +27,12 @@ interface KanbanHeaderProps {
   priorityFilter: string;
   setPriorityFilter: (p: string) => void;
   onOpenNewCard: () => void;
+  onOpenNewColumn: () => void;
 }
 
 export function KanbanHeader({
   tasks,
+  columnsCount,
   searchQuery,
   setSearchQuery,
   categoryFilter,
@@ -28,20 +40,22 @@ export function KanbanHeader({
   priorityFilter,
   setPriorityFilter,
   onOpenNewCard,
+  onOpenNewColumn,
 }: KanbanHeaderProps) {
   const [copied, setCopied] = useState(false);
 
-  const criticalCount = tasks.filter((t) => t.priority === "critical" && t.column !== "done").length;
-  const inProgressCount = tasks.filter((t) => t.column === "in_progress").length;
-  const doneCount = tasks.filter((t) => t.column === "done").length;
+  const criticalCount = tasks.filter(
+    (t) => t.priority === "critical"
+  ).length;
+  const totalTasks = tasks.length;
 
   const handleShare = async () => {
     try {
       if (typeof window !== "undefined") {
         if (navigator.share) {
           await navigator.share({
-            title: "planner",
-            text: "Quadro de execução pessoal com arrastar e soltar, foco diário e métricas.",
+            title: "planner | Personal Operating System",
+            text: "Quadro de execução pessoal com etapas personalizadas, foco e métricas.",
             url: window.location.href,
           });
         } else {
@@ -50,7 +64,7 @@ export function KanbanHeader({
           setTimeout(() => setCopied(false), 2000);
         }
       }
-    } catch (e) {
+    } catch {
       if (typeof window !== "undefined") {
         navigator.clipboard.writeText(window.location.href);
         setCopied(true);
@@ -73,27 +87,29 @@ export function KanbanHeader({
         </div>
 
         {/* Action Buttons & Fast Stats */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Status Badges */}
-          <div className="hidden lg:flex items-center gap-2 text-xs">
-            <div className="flex items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-rose-600 dark:text-rose-400 font-medium">
-              <AlertCircle className="h-3.5 w-3.5" />
-              <span>{criticalCount} Críticos</span>
+          <div className="hidden lg:flex items-center gap-2 text-xs mr-1">
+            <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-2.5 py-1 text-slate-700 dark:text-slate-300 font-medium">
+              <Columns3 className="h-3.5 w-3.5 text-cyan-500" />
+              <span>{columnsCount} Etapas</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-cyan-600 dark:text-cyan-400 font-medium">
-              <Clock className="h-3.5 w-3.5" />
-              <span>{inProgressCount} Ativos</span>
+            <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-2.5 py-1 text-slate-700 dark:text-slate-300 font-medium">
+              <ListTodo className="h-3.5 w-3.5 text-slate-500" />
+              <span>{totalTasks} Tarefas</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-emerald-600 dark:text-emerald-400 font-medium">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              <span>{doneCount} Concluídos</span>
-            </div>
+            {criticalCount > 0 && (
+              <div className="flex items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-rose-600 dark:text-rose-400 font-medium">
+                <AlertCircle className="h-3.5 w-3.5" />
+                <span>{criticalCount} Críticos</span>
+              </div>
+            )}
           </div>
 
           {/* Botão de Compartilhar Link */}
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/[0.8] hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/10 hover:border-cyan-500/30 dark:hover:border-cyan-400/30 transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/80 hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/10 hover:border-cyan-500/30 dark:hover:border-cyan-400/30 transition-all cursor-pointer shadow-xs"
             title="Copiar link ou compartilhar o planner"
           >
             {copied ? (
@@ -115,12 +131,22 @@ export function KanbanHeader({
           {/* Login Rápido com Google */}
           <UserButton />
 
-          {/* Botão Novo Card */}
+          {/* Botão Nova Etapa */}
+          <button
+            onClick={onOpenNewColumn}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white bg-white/80 hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs"
+            title="Criar nova etapa no quadro"
+          >
+            <Columns3 className="h-3.5 w-3.5 text-cyan-500" />
+            <span className="hidden sm:inline">Nova Etapa</span>
+          </button>
+
+          {/* Botão Novo Card Principal */}
           <button
             onClick={onOpenNewCard}
-            className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold bg-white/[0.8] hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 dark:hover:border-cyan-400/40 hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.25)] transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xs hover:shadow-cyan-500/20 transition-all cursor-pointer"
           >
-            <Plus className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+            <Plus className="h-4 w-4" />
             <span>Novo Card</span>
           </button>
         </div>

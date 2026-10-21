@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
-import { KanbanColumn, Priority, TaskCategory } from "@/types/planner";
+import { KanbanColumnDef, Priority, TaskCategory } from "@/types/planner";
 import {
   Dialog,
   DialogContent,
@@ -14,13 +14,14 @@ import { Input } from "@/components/ui/input";
 interface NewCardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultColumn?: KanbanColumn;
+  columns: KanbanColumnDef[];
+  defaultColumn?: string;
   onAddCard: (data: {
     title: string;
     description?: string;
     category: TaskCategory;
     priority: Priority;
-    column: KanbanColumn;
+    column: string;
     dueDate: string;
   }) => void;
 }
@@ -28,21 +29,28 @@ interface NewCardDialogProps {
 export function NewCardDialog({
   open,
   onOpenChange,
-  defaultColumn = "todo",
+  columns,
+  defaultColumn,
   onAddCard,
 }: NewCardDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<TaskCategory>("work");
   const [priority, setPriority] = useState<Priority>("medium");
-  const [column, setColumn] = useState<KanbanColumn>(defaultColumn);
-  const [dueDate, setDueDate] = useState(new Date().toISOString().split("T")[0]);
+  const [column, setColumn] = useState<string>(
+    defaultColumn || columns[0]?.id || "todo"
+  );
+  const [dueDate, setDueDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   useEffect(() => {
     if (defaultColumn) {
       setColumn(defaultColumn);
+    } else if (columns.length > 0 && !columns.some((c) => c.id === column)) {
+      setColumn(columns[0].id);
     }
-  }, [defaultColumn, open]);
+  }, [defaultColumn, columns, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +61,7 @@ export function NewCardDialog({
       description: description.trim() || undefined,
       category,
       priority,
-      column,
+      column: column || columns[0]?.id || "todo",
       dueDate,
     });
 
@@ -101,20 +109,21 @@ export function NewCardDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Coluna Inicial */}
+            {/* Coluna / Etapa Dinâmica */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                Coluna Inicial
+                Etapa do Quadro
               </label>
               <select
                 value={column}
-                onChange={(e) => setColumn(e.target.value as KanbanColumn)}
+                onChange={(e) => setColumn(e.target.value)}
                 className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
               >
-                <option value="todo">A Fazer</option>
-                <option value="in_progress">Em Andamento</option>
-                <option value="blocked">Atenção / Bloqueado</option>
-                <option value="done">Concluído</option>
+                {columns.map((col) => (
+                  <option key={col.id} value={col.id}>
+                    {col.title}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -178,7 +187,7 @@ export function NewCardDialog({
             </button>
             <button
               type="submit"
-              className="h-8 px-4 rounded-xl text-xs font-semibold bg-cyan-50 hover:bg-cyan-100 dark:bg-white/[0.08] dark:hover:bg-white/[0.15] text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/60 hover:shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)] transition-all cursor-pointer"
+              className="h-8 px-4 rounded-xl text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xs transition-all cursor-pointer"
             >
               Criar Card
             </button>

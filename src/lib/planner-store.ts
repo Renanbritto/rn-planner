@@ -1,8 +1,21 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
-import { PlannerTask, KanbanColumn, Priority, TaskCategory } from "@/types/planner";
+import {
+  PlannerTask,
+  KanbanColumnDef,
+  ColumnColor,
+  Priority,
+  TaskCategory,
+} from "@/types/planner";
 import { isSupabaseConfigured } from "./supabase";
+
+export const DEFAULT_COLUMNS: KanbanColumnDef[] = [
+  { id: "todo", title: "A Fazer", color: "slate", order: 0 },
+  { id: "in_progress", title: "Em Andamento", color: "cyan", order: 1 },
+  { id: "blocked", title: "Atenção / Bloqueado", color: "rose", order: 2 },
+  { id: "done", title: "Concluído", color: "emerald", order: 3 },
+];
 
 const INITIAL_TASKS: PlannerTask[] = [
   {
@@ -67,7 +80,16 @@ const INITIAL_TASKS: PlannerTask[] = [
   },
 ];
 
+// Sanitizador simples para segurança de inputs
+function sanitizeString(str: string, maxLength = 50): string {
+  return str
+    .replace(/[<>]/g, "")
+    .trim()
+    .slice(0, maxLength);
+}
+
 export function usePlanner() {
+  const [columns, setColumns] = useState<KanbanColumnDef[]>(DEFAULT_COLUMNS);
   const [tasks, setTasks] = useState<PlannerTask[]>(INITIAL_TASKS);
   const [isLoaded, setIsLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,32 +99,163 @@ export function usePlanner() {
   // Carrega do LocalStorage na montagem
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("rn_planner_board_tasks");
-      if (stored) {
-        const parsed: PlannerTask[] = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setTasks(parsed);
+      // 1. Carregar colunas
+      const storedCols = localStorage.getItem("rn_planner_board_columns");
+      let loadedColumns = DEFAULT_COLUMNS;
+      if (storedCols) {
+        const parsedCols: KanbanColumnDef[] = JSON.parse(storedCols);
+        if (Array.isArray(parsedCols) && parsedCols.length > 0) {
+          loadedColumns = parsedCols.sort((a, b) => a.order - b.order);
+          setColumns(loadedColumns);
+        }
+      }
+
+      // 2. Carregar tarefas
+      const storedTasks = localStorage.getItem("rn_planner_board_tasks");
+      if (storedTasks) {
+        const parsedTasks: PlannerTask[] = JSON.parse(storedTasks);
+        if (Array.isArray(parsedTasks) && parsedTasks.length > 0) {
+          // Garantir integridade referencial: se a coluna da tarefa não existir, joga na primeira coluna
+          const validColIds = new Set(loadedColumns.map((c) => c.id));
+          const firstColId = loadedColumns[0]?.id || "todo";
+          const sanitizedTasks = parsedTasks.map((t) => ({
+            ...t,
+            column: validColIds.has(t.column) ? t.column : firstColId,
+          }));
+          setTasks(sanitizedTasks);
         }
       }
     } catch (e) {
-      console.warn("Erro ao ler localStorage do board", e);
+      console.warn("Erro ao carregar estado do LocalStorage", e);
     } finally {
       setIsLoaded(true);
     }
   }, []);
 
-  // Salva no LocalStorage
+  // Salva colunas no LocalStorage
+  useEffect(() => {
+    if (!isLoaded) return;
+    try {
+      localStorage.setItem("rn_planner_board_columns", JSON.stringify(columns));
+    } catch (e) {
+      console.warn("Erro ao salvar colunas no LocalStorage", e);
+    }
+  }, [columns, isLoaded]);
+
+  // Salva tarefas no LocalStorage
   useEffect(() => {
     if (!isLoaded) return;
     try {
       localStorage.setItem("rn_planner_board_tasks", JSON.stringify(tasks));
     } catch (e) {
-      console.warn("Erro ao salvar localStorage do board", e);
+      console.warn("Erro ao salvar tarefas no LocalStorage", e);
     }
   }, [tasks, isLoaded]);
 
+  // -------------------------------------------------------------
+  // MÉTODOS DE COLUNAS / ETAPAS
+  // -------------------------------------------------------------
+
+  // Adicionar nova etapa
+  const addColumn = (title: string, color: ColumnColor = "cyan") => {
+    const cleanTitle = sanitizeString(title, 40);
+    if (!cleanTitle) return null;
+
+    const newId = `col-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+    const newCol: KanbanColumnDef = {
+      id: newId,
+      title: cleanTitle,
+      color,
+      order: columns.length,
+    };
+
+    setColumns((prev) => [...prev, newCol]);
+    return newCol;
+  };
+
+  // Editar etapa (nome e/ou cor)
+  const updateColumn = (
+    columnId: string,
+    updates: { title?: string; color?: ColumnColor }
+  ) => {
+    setColumns((prev) =>
+      prev.map((col) => {
+        if (col.id !== columnId) return col;
+        return {
+          ...col,
+          title: updates.title !== undefined ? sanitizeString(updates.title, 40) || col.title : col.title,
+          color: updates.color !== undefined ? updates.color : col.color,
+        };
+      })
+    );
+  };
+
+  // Excluir etapa com proteção de integridade
+  const deleteColumn = (
+    columnId: string,
+    options?: { moveTasksToColumnId?: string }
+  ) => {
+    if (columns.length <= 1) {
+      return { success: false, message: "O quadro precisa ter pelo menos uma etapa." };
+    }
+
+    // 1. Tratar as tarefas da coluna deletada
+    if (options?.moveTasksToColumnId) {
+      const targetColId = options.moveTasksToColumnId;
+      setTasks((prev) =>
+        prev.map((t) => (t.column === columnId ? { ...t, column: targetColId } : t))
+      );
+    } else {
+      // Exclui todas as tarefas daquela coluna
+      setTasks((prev) => prev.filter((t) => t.column !== columnId));
+    }
+
+    // 2. Remover a coluna e reordenar as remanescentes
+    setColumns((prev) => {
+      const filtered = prev.filter((c) => c.id !== columnId);
+      return filtered.map((c, idx) => ({ ...c, order: idx }));
+    });
+
+    return { success: true };
+  };
+
+  // Mover etapa para a esquerda ou direita
+  const moveColumn = (columnId: string, direction: "left" | "right") => {
+    setColumns((prev) => {
+      const idx = prev.findIndex((c) => c.id === columnId);
+      if (idx === -1) return prev;
+      if (direction === "left" && idx === 0) return prev;
+      if (direction === "right" && idx === prev.length - 1) return prev;
+
+      const newCols = [...prev];
+      const targetIdx = direction === "left" ? idx - 1 : idx + 1;
+      const [removed] = newCols.splice(idx, 1);
+      newCols.splice(targetIdx, 0, removed);
+
+      return newCols.map((col, i) => ({ ...col, order: i }));
+    });
+  };
+
+  // Limpar todas as tarefas de uma etapa específica
+  const clearColumnTasks = (columnId: string) => {
+    setTasks((prev) => prev.filter((t) => t.column !== columnId));
+  };
+
+  // Resetar colunas para o padrão de fábrica
+  const resetToDefaultColumns = () => {
+    setColumns(DEFAULT_COLUMNS);
+    const validIds = new Set(DEFAULT_COLUMNS.map((c) => c.id));
+    setTasks((prev) =>
+      prev.map((t) => (validIds.has(t.column) ? t : { ...t, column: "todo" }))
+    );
+  };
+
+  // -------------------------------------------------------------
+  // MÉTODOS DE TAREFAS / CARDS
+  // -------------------------------------------------------------
+
   // Mover tarefa entre colunas (Drag & Drop)
-  const moveTask = (taskId: string, targetColumn: KanbanColumn, targetIndex?: number) => {
+  const moveTask = (taskId: string, targetColumn: string, targetIndex?: number) => {
     setTasks((prev) => {
       const targetTask = prev.find((t) => t.id === taskId);
       if (!targetTask) return prev;
@@ -114,7 +267,6 @@ export function usePlanner() {
       };
 
       if (typeof targetIndex === "number") {
-        // Encontra o index absoluto na lista filtrada pela coluna
         const columnTasks = remaining.filter((t) => t.column === targetColumn);
         const insertBeforeTask = columnTasks[targetIndex];
 
@@ -135,12 +287,14 @@ export function usePlanner() {
     description?: string;
     category: TaskCategory;
     priority: Priority;
-    column: KanbanColumn;
+    column: string;
     dueDate: string;
   }) => {
     const nextNumber = tasks.length + 101;
     const newTask: PlannerTask = {
       ...data,
+      title: sanitizeString(data.title, 120),
+      description: data.description ? sanitizeString(data.description, 400) : undefined,
       id: "t-" + Date.now(),
       code: `RN-${nextNumber}`,
       createdAt: new Date().toISOString(),
@@ -157,16 +311,31 @@ export function usePlanner() {
   // Atualizar tarefa
   const updateTask = (id: string, updates: Partial<PlannerTask>) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        return {
+          ...t,
+          ...updates,
+          title: updates.title !== undefined ? sanitizeString(updates.title, 120) : t.title,
+          description:
+            updates.description !== undefined
+              ? updates.description
+                ? sanitizeString(updates.description, 400)
+                : undefined
+              : t.description,
+        };
+      })
     );
   };
 
-  // Tarefas filtradas
+  // Tarefas filtradas por busca e tags
   const filteredTasks = tasks.filter((task) => {
+    const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      !q ||
+      task.title.toLowerCase().includes(q) ||
+      task.code.toLowerCase().includes(q) ||
+      (task.description && task.description.toLowerCase().includes(q));
 
     const matchesCategory =
       categoryFilter === "all" || task.category === categoryFilter;
@@ -178,6 +347,7 @@ export function usePlanner() {
   });
 
   return {
+    columns,
     tasks: filteredTasks,
     allTasks: tasks,
     isLoaded,
@@ -188,6 +358,14 @@ export function usePlanner() {
     setCategoryFilter,
     priorityFilter,
     setPriorityFilter,
+    // Column operations
+    addColumn,
+    updateColumn,
+    deleteColumn,
+    moveColumn,
+    clearColumnTasks,
+    resetToDefaultColumns,
+    // Task operations
     moveTask,
     addTask,
     deleteTask,
