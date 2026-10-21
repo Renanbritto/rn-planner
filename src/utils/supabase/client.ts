@@ -12,16 +12,14 @@ function cleanEnv(val?: string) {
   return cleaned.replace(/^["']|["']$/g, "").trim();
 }
 
-function cleanUrl(val?: string) {
-  let cleaned = cleanEnv(val);
-  if (!cleaned || cleaned.includes("your-project") || cleaned.includes("your-supabase-url")) {
-    return DEFAULT_SUPABASE_URL;
+function cleanUrl(val?: string): string {
+  if (!val) return DEFAULT_SUPABASE_URL;
+  const str = val.trim().replace("supabse.co", "supabase.co");
+  const match = str.match(/([a-z0-9_-]+\.supabase\.co)/i);
+  if (match) {
+    return `https://${match[1]}`;
   }
-  if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
-    cleaned = `https://${cleaned}`;
-  }
-  cleaned = cleaned.replace("supabse.co", "supabase.co");
-  return cleaned;
+  return DEFAULT_SUPABASE_URL;
 }
 
 export const createClient = () => {

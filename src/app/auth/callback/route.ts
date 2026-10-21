@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+const DEFAULT_SUPABASE_URL = "https://vmextlzjsambgblssvkn.supabase.co";
+const DEFAULT_SUPABASE_KEY = "sb_publishable_cOchNUmijXgwu0Vxl-7lOw_OFS-RlIy";
+
 function cleanEnv(val?: string) {
   if (!val) return "";
   let cleaned = val.trim();
@@ -10,18 +13,15 @@ function cleanEnv(val?: string) {
   return cleaned.replace(/^["']|["']$/g, "").trim();
 }
 
-function cleanUrl(val?: string) {
-  let cleaned = cleanEnv(val);
-  if (!cleaned) return "https://vmextlzjsambgblssvkn.supabase.co";
-  if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
-    cleaned = `https://${cleaned}`;
+function cleanUrl(val?: string): string {
+  if (!val) return DEFAULT_SUPABASE_URL;
+  const str = val.trim().replace("supabse.co", "supabase.co");
+  const match = str.match(/([a-z0-9_-]+\.supabase\.co)/i);
+  if (match) {
+    return `https://${match[1]}`;
   }
-  cleaned = cleaned.replace("supabse.co", "supabase.co");
-  return cleaned;
+  return DEFAULT_SUPABASE_URL;
 }
-
-const DEFAULT_SUPABASE_URL = "https://vmextlzjsambgblssvkn.supabase.co";
-const DEFAULT_SUPABASE_KEY = "sb_publishable_cOchNUmijXgwu0Vxl-7lOw_OFS-RlIy";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     : origin;
 
   if (code) {
-    const supabaseUrl = cleanUrl(process.env.NEXT_PUBLIC_SUPABASE_URL) || DEFAULT_SUPABASE_URL;
+    const supabaseUrl = cleanUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
     const supabaseKey = cleanEnv(
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
