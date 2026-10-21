@@ -20,6 +20,7 @@ function cleanUrl(val?: string) {
   if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
     cleaned = `https://${cleaned}`;
   }
+  cleaned = cleaned.replace("supabse.co", "supabase.co");
   return cleaned;
 }
 
