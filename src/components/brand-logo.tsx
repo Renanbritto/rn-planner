@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 
@@ -15,7 +15,7 @@ export function BrandLogo({
 }: BrandLogoProps) {
   return (
     <div className={`flex items-center gap-3 select-none ${className}`}>
-      {/* Símbolo Abstrato Geométrico (Estilo Linear / Board de Execução) */}
+      {/* Símbolo Abstrato Geométrico em Obsidian Glass */}
       <svg
         width={size}
         height={size}
@@ -24,23 +24,24 @@ export function BrandLogo({
         xmlns="http://www.w3.org/2000/svg"
         className="shrink-0 transition-transform duration-200 hover:scale-105"
       >
-        {/* Superfície do Ícone */}
+        {/* Superfície Obsidian do Ícone */}
         <rect
           width="40"
           height="40"
           rx="12"
-          className="fill-slate-100 dark:fill-[#0c101d] stroke-slate-200 dark:stroke-white/10"
+          fill="#0b0f1a"
+          stroke="rgba(255, 255, 255, 0.12)"
           strokeWidth="1.5"
         />
 
-        {/* 3 Barras Minimalistas do Quadro de Execução */}
+        {/* 3 Barras Neon Semânticas do Quadro */}
         <rect
           x="11"
           y="15"
           width="4.5"
           height="11"
           rx="2.25"
-          className="fill-slate-400 dark:fill-slate-600"
+          fill="#f43f5e"
         />
         <rect
           x="18"
@@ -48,7 +49,7 @@ export function BrandLogo({
           width="4.5"
           height="20"
           rx="2.25"
-          className="fill-cyan-600 dark:fill-cyan-400"
+          fill="#06b6d4"
         />
         <rect
           x="25"
@@ -56,17 +57,17 @@ export function BrandLogo({
           width="4.5"
           height="13"
           rx="2.25"
-          className="fill-emerald-600 dark:fill-emerald-400"
+          fill="#10b981"
         />
       </svg>
 
       {/* Tipografia em Comfortaa */}
       {showText && (
         <div className="flex items-center gap-1.5">
-          <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+          <span className="font-comfortaa text-lg font-bold tracking-tight text-white">
             planner
           </span>
-          <span className="h-1.5 w-1.5 rounded-full bg-cyan-600 dark:bg-cyan-400" />
+          <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
         </div>
       )}
     </div>

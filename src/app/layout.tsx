@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Comfortaa } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -54,7 +54,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${comfortaa.variable} antialiased`}
     >
-      <body className="min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#090d16] dark:text-slate-100 selection:bg-cyan-500/20 selection:text-cyan-400 font-sans transition-colors duration-200">
+      <body className="min-h-screen bg-[#090d16] text-slate-100 selection:bg-cyan-500/20 selection:text-cyan-400 font-sans antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

@@ -72,9 +72,9 @@ export function NewCardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a] backdrop-blur-2xl text-slate-900 dark:text-slate-100 sm:max-w-[480px] shadow-2xl rounded-2xl">
+      <DialogContent className="border border-white/10 bg-[#0b0f1a]/95 backdrop-blur-2xl text-slate-100 sm:max-w-[480px] shadow-2xl shadow-black/60 rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <DialogTitle className="font-comfortaa text-base font-bold text-white flex items-center gap-2">
             <span>Novo Card</span>
           </DialogTitle>
         </DialogHeader>
@@ -82,21 +82,21 @@ export function NewCardDialog({
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-2">
           {/* Título */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+            <label className="font-comfortaa text-xs font-semibold text-slate-300">
               Título da Tarefa
             </label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Treinar modelo XGBoost ou Refatorar queries"
-              className="bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
+              className="bg-[#090d16] border-white/10 hover:border-white/20 text-xs text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
               autoFocus
             />
           </div>
 
           {/* Descrição */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+            <label className="font-comfortaa text-xs font-semibold text-slate-300">
               Descrição (opcional)
             </label>
             <textarea
@@ -104,20 +104,20 @@ export function NewCardDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detalhes técnicos ou escopo da tarefa..."
-              className="rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 resize-none"
+              className="rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] p-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 resize-none font-sans"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {/* Coluna / Etapa Dinâmica */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <label className="font-comfortaa text-xs font-semibold text-slate-300">
                 Etapa do Quadro
               </label>
               <select
                 value={column}
                 onChange={(e) => setColumn(e.target.value)}
-                className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
+                className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer font-comfortaa"
               >
                 {columns.map((col) => (
                   <option key={col.id} value={col.id}>
@@ -129,13 +129,13 @@ export function NewCardDialog({
 
             {/* Prioridade */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <label className="font-comfortaa text-xs font-semibold text-slate-300">
                 Prioridade
               </label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as Priority)}
-                className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
+                className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer font-comfortaa"
               >
                 <option value="critical">Crítica (Urgente)</option>
                 <option value="medium">Média (Padrão)</option>
@@ -147,13 +147,13 @@ export function NewCardDialog({
           <div className="grid grid-cols-2 gap-3">
             {/* Categoria */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <label className="font-comfortaa text-xs font-semibold text-slate-300">
                 Categoria
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as TaskCategory)}
-                className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer"
+                className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer font-comfortaa"
               >
                 <option value="work">Tech / Trabalho</option>
                 <option value="study">Estudo</option>
@@ -165,14 +165,14 @@ export function NewCardDialog({
 
             {/* Data de Entrega */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              <label className="font-comfortaa text-xs font-semibold text-slate-300">
                 Data Alvo
               </label>
               <Input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
+                className="bg-[#090d16] border-white/10 hover:border-white/20 text-xs text-white focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl font-mono"
               />
             </div>
           </div>
@@ -181,13 +181,13 @@ export function NewCardDialog({
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="h-8 px-3 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.03] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer"
+              className="h-9 px-4 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all cursor-pointer font-comfortaa"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="h-8 px-4 rounded-xl text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xs transition-all cursor-pointer"
+              className="h-9 px-5 rounded-xl text-xs font-bold font-comfortaa bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-slate-950 shadow-lg shadow-cyan-500/20 transition-all cursor-pointer"
             >
               Criar Card
             </button>

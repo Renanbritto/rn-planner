@@ -44,7 +44,7 @@ export function KanbanBoard({
   return (
     <div className="w-full">
       {/* Container flex com scroll horizontal responsivo para qualquer quantidade de etapas */}
-      <div className="flex items-start gap-5 overflow-x-auto pb-6 pt-1 px-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-white/10">
+      <div className="flex items-start gap-5 overflow-x-auto pb-6 pt-1 px-1 scrollbar-thin scrollbar-thumb-white/10">
         {columns.map((col, index) => {
           const columnTasks = tasks.filter((t) => t.column === col.id);
 
@@ -71,15 +71,15 @@ export function KanbanBoard({
         <button
           type="button"
           onClick={() => setIsNewColDialogOpen(true)}
-          className="group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300/80 dark:border-white/10 hover:border-cyan-500/50 bg-slate-50/40 dark:bg-white/[0.01] hover:bg-cyan-500/[0.04] p-6 min-h-[580px] w-full min-w-[240px] max-w-[280px] shrink-0 transition-all duration-200 cursor-pointer shadow-xs text-slate-500 hover:text-cyan-600 dark:hover:text-cyan-400"
+          className="group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/10 hover:border-cyan-500/50 bg-[#0b0f1a]/60 hover:bg-[#0b0f1a]/95 backdrop-blur-2xl p-6 min-h-[580px] w-full min-w-[240px] max-w-[280px] shrink-0 transition-all duration-200 cursor-pointer shadow-xl shadow-black/20 text-slate-400 hover:text-cyan-400"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 dark:border-white/10 group-hover:border-cyan-500/30 bg-white/80 dark:bg-white/[0.04] text-slate-600 dark:text-slate-400 group-hover:text-cyan-500 transition-all shadow-xs group-hover:scale-110">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 group-hover:border-cyan-500/30 bg-white/[0.04] text-slate-400 group-hover:text-cyan-400 transition-all shadow-xs group-hover:scale-110">
             <Plus className="h-6 w-6" />
           </div>
-          <span className="mt-3 text-sm font-semibold tracking-wide">
+          <span className="font-comfortaa mt-3 text-sm font-bold tracking-wide text-slate-200 group-hover:text-cyan-300">
             Nova Etapa
           </span>
-          <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 text-center">
+          <span className="text-[11px] text-slate-500 mt-1 text-center font-mono">
             Adicione uma nova etapa ao seu fluxo de trabalho
           </span>
         </button>

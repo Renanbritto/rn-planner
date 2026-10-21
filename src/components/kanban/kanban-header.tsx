@@ -44,10 +44,24 @@ export function KanbanHeader({
 }: KanbanHeaderProps) {
   const [copied, setCopied] = useState(false);
 
-  const criticalCount = tasks.filter(
-    (t) => t.priority === "critical"
-  ).length;
   const totalTasks = tasks.length;
+  const criticalCount = tasks.filter((t) => t.priority === "critical").length;
+  const inProgressCount = tasks.filter(
+    (t) =>
+      t.column === "in_progress" ||
+      t.column.toLowerCase().includes("prog") ||
+      t.column.toLowerCase().includes("andamento") ||
+      t.column.toLowerCase().includes("exec")
+  ).length;
+  const doneCount = tasks.filter(
+    (t) =>
+      t.column === "done" ||
+      t.column.toLowerCase().includes("done") ||
+      t.column.toLowerCase().includes("conclu") ||
+      t.column.toLowerCase().includes("finaliz")
+  ).length;
+  const completionRate =
+    totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0;
 
   const handleShare = async () => {
     try {
@@ -74,77 +88,60 @@ export function KanbanHeader({
   };
 
   return (
-    <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
-      {/* Top Row: Logo & Actions */}
+    <div className="flex flex-col gap-4 border-b border-white/10 pb-5">
+      {/* Top Row: Brand & Quick Actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Minimalist Brand Logo */}
+        {/* Brand Logo in Comfortaa */}
         <div className="flex items-center gap-3">
           <BrandLogo size={36} showText={true} />
-          <div className="hidden sm:block h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
-            <span>Sprint Ativa</span>
+          <div className="hidden sm:block h-6 w-px bg-white/10 mx-1" />
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="font-semibold text-slate-300">OBSIDIAN GLASS</span>
           </div>
         </div>
 
-        {/* Action Buttons & Fast Stats */}
+        {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Status Badges */}
-          <div className="hidden lg:flex items-center gap-2 text-xs mr-1">
-            <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-2.5 py-1 text-slate-700 dark:text-slate-300 font-medium">
-              <Columns3 className="h-3.5 w-3.5 text-cyan-500" />
-              <span>{columnsCount} Etapas</span>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/70 dark:bg-white/[0.04] px-2.5 py-1 text-slate-700 dark:text-slate-300 font-medium">
-              <ListTodo className="h-3.5 w-3.5 text-slate-500" />
-              <span>{totalTasks} Tarefas</span>
-            </div>
-            {criticalCount > 0 && (
-              <div className="flex items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-rose-600 dark:text-rose-400 font-medium">
-                <AlertCircle className="h-3.5 w-3.5" />
-                <span>{criticalCount} Críticos</span>
-              </div>
-            )}
-          </div>
-
           {/* Botão de Compartilhar Link */}
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/80 hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/10 hover:border-cyan-500/30 dark:hover:border-cyan-400/30 transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-white/[0.08] border border-white/10 hover:border-cyan-400/40 transition-all cursor-pointer shadow-xs"
             title="Copiar link ou compartilhar o planner"
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="text-emerald-500 font-semibold">Copiado!</span>
+                <Check className="h-3.5 w-3.5 text-emerald-400" />
+                <span className="text-emerald-400 font-bold font-comfortaa">Copiado!</span>
               </>
             ) : (
               <>
-                <Share2 className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
-                <span className="hidden sm:inline">Compartilhar</span>
+                <Share2 className="h-3.5 w-3.5 text-cyan-400" />
+                <span className="hidden sm:inline font-comfortaa">Compartilhar</span>
               </>
             )}
           </button>
 
-          {/* Alternador de Tema (Claro / Obsidian) */}
+          {/* Alternador de Tema */}
           <ThemeToggle />
 
-          {/* Login Rápido com Google */}
+          {/* Auth Button */}
           <UserButton />
 
           {/* Botão Nova Etapa */}
           <button
             onClick={onOpenNewColumn}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white bg-white/80 hover:bg-white dark:bg-white/[0.06] dark:hover:bg-white/[0.12] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-200 hover:text-white bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-white/[0.08] border border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs"
             title="Criar nova etapa no quadro"
           >
-            <Columns3 className="h-3.5 w-3.5 text-cyan-500" />
-            <span className="hidden sm:inline">Nova Etapa</span>
+            <Columns3 className="h-3.5 w-3.5 text-cyan-400" />
+            <span className="hidden sm:inline font-comfortaa">Nova Etapa</span>
           </button>
 
           {/* Botão Novo Card Principal */}
           <button
             onClick={onOpenNewCard}
-            className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-semibold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xs hover:shadow-cyan-500/20 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-bold font-comfortaa bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-slate-950 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>Novo Card</span>
@@ -152,16 +149,103 @@ export function KanbanHeader({
         </div>
       </div>
 
-      {/* Barra de Busca e Filtros */}
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between bg-white/70 dark:bg-[#0b0f1a] backdrop-blur-2xl p-2.5 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm">
+      {/* Row of 4 Obsidian Glass Metric Cards with Semantic Neon Highlights */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* Cyan Metric: Total de Tarefas (#06b6d4) */}
+        <div className="relative overflow-hidden rounded-2xl bg-[#0b0f1a]/95 backdrop-blur-2xl border border-white/10 hover:border-cyan-500/40 p-3.5 transition-all duration-200 shadow-xl shadow-black/20 group">
+          <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#06b6d4] to-transparent opacity-80" />
+          <div className="flex items-center justify-between">
+            <span className="font-comfortaa text-xs font-semibold text-slate-300">
+              Total Tarefas
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#06b6d4]/10 text-[#06b6d4] border border-[#06b6d4]/20 shadow-[0_0_8px_rgba(6,182,212,0.15)]">
+              <ListTodo className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="font-mono font-extrabold text-2xl text-white tracking-tight">
+              {totalTasks}
+            </span>
+            <span className="font-mono text-[11px] text-[#06b6d4] font-bold">
+              {columnsCount} etapas
+            </span>
+          </div>
+        </div>
+
+        {/* Amber Metric: Em Execução (#f59e0b) */}
+        <div className="relative overflow-hidden rounded-2xl bg-[#0b0f1a]/95 backdrop-blur-2xl border border-white/10 hover:border-amber-500/40 p-3.5 transition-all duration-200 shadow-xl shadow-black/20 group">
+          <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#f59e0b] to-transparent opacity-80" />
+          <div className="flex items-center justify-between">
+            <span className="font-comfortaa text-xs font-semibold text-slate-300">
+              Em Execução
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/20 shadow-[0_0_8px_rgba(245,158,11,0.15)]">
+              <Clock className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="font-mono font-extrabold text-2xl text-[#f59e0b] tracking-tight">
+              {inProgressCount}
+            </span>
+            <span className="font-mono text-[11px] text-[#f59e0b]/90 font-bold">
+              foco ativo
+            </span>
+          </div>
+        </div>
+
+        {/* Rose/Magenta Metric: Críticos / Urgentes (#f43f5e) */}
+        <div className="relative overflow-hidden rounded-2xl bg-[#0b0f1a]/95 backdrop-blur-2xl border border-white/10 hover:border-rose-500/40 p-3.5 transition-all duration-200 shadow-xl shadow-black/20 group">
+          <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#f43f5e] to-transparent opacity-80" />
+          <div className="flex items-center justify-between">
+            <span className="font-comfortaa text-xs font-semibold text-slate-300">
+              Prioridade Crítica
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#f43f5e]/10 text-[#f43f5e] border border-[#f43f5e]/20 shadow-[0_0_8px_rgba(244,63,94,0.15)]">
+              <AlertCircle className={`h-3.5 w-3.5 ${criticalCount > 0 ? "animate-pulse" : ""}`} />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="font-mono font-extrabold text-2xl text-[#f43f5e] tracking-tight">
+              {criticalCount}
+            </span>
+            <span className="font-mono text-[11px] text-[#f43f5e]/90 font-bold">
+              {criticalCount > 0 ? "ação urgente" : "sob controle"}
+            </span>
+          </div>
+        </div>
+
+        {/* Emerald Metric: Concluídas (#10b981) */}
+        <div className="relative overflow-hidden rounded-2xl bg-[#0b0f1a]/95 backdrop-blur-2xl border border-white/10 hover:border-emerald-500/40 p-3.5 transition-all duration-200 shadow-xl shadow-black/20 group">
+          <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#10b981] to-transparent opacity-80" />
+          <div className="flex items-center justify-between">
+            <span className="font-comfortaa text-xs font-semibold text-slate-300">
+              Concluídas
+            </span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 shadow-[0_0_8px_rgba(16,185,129,0.15)]">
+              <Check className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="font-mono font-extrabold text-2xl text-[#10b981] tracking-tight">
+              {doneCount}
+            </span>
+            <span className="font-mono font-extrabold text-[11px] text-[#10b981]/90">
+              {completionRate}% taxa
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Barra de Busca e Filtros em Obsidian Glass */}
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between bg-[#0b0f1a]/95 backdrop-blur-2xl p-2.5 rounded-2xl border border-white/10 hover:border-white/20 transition-colors shadow-lg shadow-black/20">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Filtrar por título, ID ou descrição (#RN-101)..."
-            className="h-9 pl-9 bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
+            placeholder="Filtrar por título, código (#RN-101)..."
+            className="h-9 pl-9 bg-[#090d16] border-white/10 hover:border-white/20 text-xs text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
           />
         </div>
 
@@ -171,7 +255,7 @@ export function KanbanHeader({
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs"
+            className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs font-comfortaa"
           >
             <option value="all">Todas Categorias</option>
             <option value="work">Tech / Trabalho</option>
@@ -185,7 +269,7 @@ export function KanbanHeader({
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs"
+            className="h-9 rounded-xl border border-white/10 hover:border-white/20 bg-[#090d16] px-3 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs font-comfortaa"
           >
             <option value="all">Todas Prioridades</option>
             <option value="critical">Crítica</option>
