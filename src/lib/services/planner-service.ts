@@ -88,7 +88,11 @@ export class PlannerService {
    * Carrega colunas e tarefas do usuário a partir do Supabase.
    * Se o usuário ainda não tiver colunas salvas, inicializa com os padrões.
    */
-  static async fetchUserBoard(userId: string): Promise<{
+  static async fetchUserBoard(
+    userId: string,
+    initialCols?: KanbanColumnDef[],
+    initialTasks?: PlannerTask[]
+  ): Promise<{
     columns: KanbanColumnDef[];
     tasks: PlannerTask[];
     tableMissing?: boolean;
@@ -127,10 +131,12 @@ export class PlannerService {
 
       // Se usuário não tiver colunas cadastradas no banco, cria o layout inicial
       if (!colsData || colsData.length === 0) {
-        await this.initializeUserBoard(userId, DEFAULT_COLUMNS, INITIAL_TASKS);
+        const colsToSeed = initialCols && initialCols.length > 0 ? initialCols : DEFAULT_COLUMNS;
+        const tasksToSeed = initialTasks !== undefined ? initialTasks : INITIAL_TASKS;
+        await this.initializeUserBoard(userId, colsToSeed, tasksToSeed);
         return {
-          columns: DEFAULT_COLUMNS,
-          tasks: INITIAL_TASKS,
+          columns: colsToSeed,
+          tasks: tasksToSeed,
         };
       }
 

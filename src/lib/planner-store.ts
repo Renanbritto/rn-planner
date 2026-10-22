@@ -90,7 +90,9 @@ export function usePlanner() {
       setSyncStatus("syncing");
       activeUserIdRef.current = user.id;
 
-      const result = await PlannerService.fetchUserBoard(user.id);
+      const localCols = getStoredLocalColumns();
+      const localTasks = getStoredLocalTasks(localCols);
+      const result = await PlannerService.fetchUserBoard(user.id, localCols, localTasks);
 
       if (result.tableMissing) {
         setSyncStatus("needs_schema");
