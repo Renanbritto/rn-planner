@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   PlannerTask,
   KanbanColumnDef,
@@ -8,77 +8,15 @@ import {
   Priority,
   TaskCategory,
 } from "@/types/planner";
-import { isSupabaseConfigured } from "./supabase";
+import { useAuth } from "./auth-context";
+import {
+  PlannerService,
+  DEFAULT_COLUMNS,
+  INITIAL_TASKS,
+} from "./services/planner-service";
+import { toast } from "sonner";
 
-export const DEFAULT_COLUMNS: KanbanColumnDef[] = [
-  { id: "todo", title: "A Fazer", color: "slate", order: 0 },
-  { id: "in_progress", title: "Em Andamento", color: "cyan", order: 1 },
-  { id: "blocked", title: "Atenção / Bloqueado", color: "rose", order: 2 },
-  { id: "done", title: "Concluído", color: "emerald", order: 3 },
-];
-
-const INITIAL_TASKS: PlannerTask[] = [
-  {
-    id: "t-1",
-    code: "RN-101",
-    title: "Revisar pipeline de inferência & métricas do Sentinel",
-    description: "Validar taxa de falso positivos e latência média em produção.",
-    category: "work",
-    priority: "critical",
-    column: "in_progress",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 0,
-  },
-  {
-    id: "t-2",
-    code: "RN-102",
-    title: "Otimizar consultas Drizzle & índices do banco",
-    description: "Adicionar índices parciais nas queries mais lentas.",
-    category: "work",
-    priority: "medium",
-    column: "done",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 0,
-  },
-  {
-    id: "t-3",
-    code: "RN-103",
-    title: "Estudo: Deep dive em Causal Inference & Estatística",
-    description: "Ler capítulo 4 sobre Do-calculus e DAGs causais.",
-    category: "study",
-    priority: "medium",
-    column: "todo",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 0,
-  },
-  {
-    id: "t-4",
-    code: "RN-104",
-    title: "Treino de Força & Mobilidade (1h)",
-    description: "Foco em membros superiores e liberação miofascial.",
-    category: "health",
-    priority: "low",
-    column: "todo",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 1,
-  },
-  {
-    id: "t-5",
-    code: "RN-105",
-    title: "Ajustar alocação de aportes do mês",
-    description: "Transferir reserva estratégica e rebalancear carteira.",
-    category: "finance",
-    priority: "critical",
-    column: "blocked",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 0,
-  },
-];
+export type SyncStatus = "synced" | "syncing" | "local" | "needs_schema" | "error";
 
 // Sanitizador simples para segurança de inputs
 function sanitizeString(str: string, maxLength = 50): string {
@@ -88,76 +26,138 @@ function sanitizeString(str: string, maxLength = 50): string {
     .slice(0, maxLength);
 }
 
+function getStoredLocalColumns(): KanbanColumnDef[] {
+  if (typeof window === "undefined") return DEFAULT_COLUMNS;
+  try {
+    const storedCols = localStorage.getItem("rn_planner_board_columns");
+    if (storedCols) {
+      const parsedCols: KanbanColumnDef[] = JSON.parse(storedCols);
+      if (Array.isArray(parsedCols) && parsedCols.length > 0) {
+        return parsedCols.sort((a, b) => a.order - b.order);
+      }
+    }
+  } catch (e) {
+    console.warn("Erro ao carregar colunas do LocalStorage", e);
+  }
+  return DEFAULT_COLUMNS;
+}
+
+function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
+  if (typeof window === "undefined") return INITIAL_TASKS;
+  try {
+    const storedTasks = localStorage.getItem("rn_planner_board_tasks");
+    if (storedTasks) {
+      const parsedTasks: PlannerTask[] = JSON.parse(storedTasks);
+      if (Array.isArray(parsedTasks) && parsedTasks.length > 0) {
+        const validColIds = new Set(validColumns.map((c) => c.id));
+        const firstColId = validColumns[0]?.id || "todo";
+        return parsedTasks.map((t) => ({
+          ...t,
+          column: validColIds.has(t.column) ? t.column : firstColId,
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn("Erro ao carregar tarefas do LocalStorage", e);
+  }
+  return INITIAL_TASKS;
+}
+
 export function usePlanner() {
+  const { user, loading: authLoading } = useAuth();
+
   const [columns, setColumns] = useState<KanbanColumnDef[]>(DEFAULT_COLUMNS);
   const [tasks, setTasks] = useState<PlannerTask[]>(INITIAL_TASKS);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("local");
+  const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
+
+  // Filtros de busca
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
 
-  // Carrega do LocalStorage na montagem
-  useEffect(() => {
-    try {
-      // 1. Carregar colunas
-      const storedCols = localStorage.getItem("rn_planner_board_columns");
-      let loadedColumns = DEFAULT_COLUMNS;
-      if (storedCols) {
-        const parsedCols: KanbanColumnDef[] = JSON.parse(storedCols);
-        if (Array.isArray(parsedCols) && parsedCols.length > 0) {
-          loadedColumns = parsedCols.sort((a, b) => a.order - b.order);
-          setColumns(loadedColumns);
-        }
-      }
+  const activeUserIdRef = useRef<string | null>(null);
 
-      // 2. Carregar tarefas
-      const storedTasks = localStorage.getItem("rn_planner_board_tasks");
-      if (storedTasks) {
-        const parsedTasks: PlannerTask[] = JSON.parse(storedTasks);
-        if (Array.isArray(parsedTasks) && parsedTasks.length > 0) {
-          // Garantir integridade referencial: se a coluna da tarefa não existir, joga na primeira coluna
-          const validColIds = new Set(loadedColumns.map((c) => c.id));
-          const firstColId = loadedColumns[0]?.id || "todo";
-          const sanitizedTasks = parsedTasks.map((t) => ({
-            ...t,
-            column: validColIds.has(t.column) ? t.column : firstColId,
-          }));
-          setTasks(sanitizedTasks);
-        }
+  // -------------------------------------------------------------
+  // CARREGAMENTO INICIAL (SUPABASE OU LOCALSTORAGE)
+  // -------------------------------------------------------------
+  const loadData = useCallback(async () => {
+    if (authLoading) return;
+
+    if (user) {
+      // Usuário autenticado: busca no Supabase
+      setSyncStatus("syncing");
+      activeUserIdRef.current = user.id;
+
+      const result = await PlannerService.fetchUserBoard(user.id);
+
+      if (result.tableMissing) {
+        setSyncStatus("needs_schema");
+        setSyncErrorMessage(
+          "As tabelas 'columns' e 'tasks' não foram criadas no Supabase. Execute o script supabase/schema.sql no painel do Supabase."
+        );
+        const cols = getStoredLocalColumns();
+        setColumns(cols);
+        setTasks(getStoredLocalTasks(cols));
+        toast.warning(
+          "Supabase precisa do schema configurado. Suas tarefas estão sendo salvas localmente enquanto isso.",
+          { duration: 6000 }
+        );
+      } else if (result.error) {
+        setSyncStatus("error");
+        setSyncErrorMessage(result.error);
+        const cols = getStoredLocalColumns();
+        setColumns(cols);
+        setTasks(getStoredLocalTasks(cols));
+        toast.error(`Falha ao conectar na nuvem: ${result.error}`);
+      } else {
+        setColumns(result.columns);
+        setTasks(result.tasks);
+        setSyncStatus("synced");
+        setSyncErrorMessage(null);
       }
-    } catch (e) {
-      console.warn("Erro ao carregar estado do LocalStorage", e);
-    } finally {
-      setIsLoaded(true);
+    } else {
+      // Modo convidado / não logado: busca do LocalStorage
+      activeUserIdRef.current = null;
+      setSyncStatus("local");
+      const cols = getStoredLocalColumns();
+      setColumns(cols);
+      setTasks(getStoredLocalTasks(cols));
     }
-  }, []);
 
-  // Salva colunas no LocalStorage
+    setIsLoaded(true);
+  }, [user, authLoading]);
+
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (active) {
+        loadData();
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [loadData]);
+
+  // Salvar backup no LocalStorage sempre que houver alteração
   useEffect(() => {
     if (!isLoaded) return;
     try {
       localStorage.setItem("rn_planner_board_columns", JSON.stringify(columns));
-    } catch (e) {
-      console.warn("Erro ao salvar colunas no LocalStorage", e);
-    }
-  }, [columns, isLoaded]);
-
-  // Salva tarefas no LocalStorage
-  useEffect(() => {
-    if (!isLoaded) return;
-    try {
       localStorage.setItem("rn_planner_board_tasks", JSON.stringify(tasks));
     } catch (e) {
-      console.warn("Erro ao salvar tarefas no LocalStorage", e);
+      console.warn("Erro ao salvar cache local", e);
     }
-  }, [tasks, isLoaded]);
+  }, [columns, tasks, isLoaded]);
 
   // -------------------------------------------------------------
   // MÉTODOS DE COLUNAS / ETAPAS
   // -------------------------------------------------------------
 
   // Adicionar nova etapa
-  const addColumn = (title: string, color: ColumnColor = "cyan") => {
+  const addColumn = async (title: string, color: ColumnColor = "cyan") => {
     const cleanTitle = sanitizeString(title, 40);
     if (!cleanTitle) return null;
 
@@ -169,29 +169,62 @@ export function usePlanner() {
       order: columns.length,
     };
 
+    // Atualização otimista imediata na UI
     setColumns((prev) => [...prev, newCol]);
+
+    // Persistência na nuvem se autenticado
+    if (user && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      const res = await PlannerService.upsertColumn(user.id, newCol);
+      if (res.tableMissing) {
+        setSyncStatus("needs_schema");
+      } else if (!res.success) {
+        toast.error("Falha ao salvar coluna no Supabase");
+        setSyncStatus("error");
+      } else {
+        setSyncStatus("synced");
+      }
+    }
+
+    toast.success(`Etapa "${cleanTitle}" criada`);
     return newCol;
   };
 
   // Editar etapa (nome e/ou cor)
-  const updateColumn = (
+  const updateColumn = async (
     columnId: string,
     updates: { title?: string; color?: ColumnColor }
   ) => {
+    let updatedTargetCol: KanbanColumnDef | null = null;
+
     setColumns((prev) =>
       prev.map((col) => {
         if (col.id !== columnId) return col;
-        return {
+        const updated = {
           ...col,
           title: updates.title !== undefined ? sanitizeString(updates.title, 40) || col.title : col.title,
           color: updates.color !== undefined ? updates.color : col.color,
         };
+        updatedTargetCol = updated;
+        return updated;
       })
     );
+
+    if (user && updatedTargetCol && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      const res = await PlannerService.upsertColumn(user.id, updatedTargetCol);
+      if (res.tableMissing) {
+        setSyncStatus("needs_schema");
+      } else if (!res.success) {
+        setSyncStatus("error");
+      } else {
+        setSyncStatus("synced");
+      }
+    }
   };
 
   // Excluir etapa com proteção de integridade
-  const deleteColumn = (
+  const deleteColumn = async (
     columnId: string,
     options?: { moveTasksToColumnId?: string }
   ) => {
@@ -206,48 +239,89 @@ export function usePlanner() {
         prev.map((t) => (t.column === columnId ? { ...t, column: targetColId } : t))
       );
     } else {
-      // Exclui todas as tarefas daquela coluna
       setTasks((prev) => prev.filter((t) => t.column !== columnId));
     }
 
     // 2. Remover a coluna e reordenar as remanescentes
-    setColumns((prev) => {
-      const filtered = prev.filter((c) => c.id !== columnId);
-      return filtered.map((c, idx) => ({ ...c, order: idx }));
-    });
+    const updatedCols = columns
+      .filter((c) => c.id !== columnId)
+      .map((c, idx) => ({ ...c, order: idx }));
 
+    setColumns(updatedCols);
+
+    // 3. Persistência na nuvem
+    if (user && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      const res = await PlannerService.deleteColumn(
+        user.id,
+        columnId,
+        options?.moveTasksToColumnId
+      );
+      if (res.tableMissing) {
+        setSyncStatus("needs_schema");
+      } else if (!res.success) {
+        setSyncStatus("error");
+      } else {
+        setSyncStatus("synced");
+      }
+    }
+
+    toast.success("Etapa removida com sucesso");
     return { success: true };
   };
 
   // Mover etapa para a esquerda ou direita
-  const moveColumn = (columnId: string, direction: "left" | "right") => {
-    setColumns((prev) => {
-      const idx = prev.findIndex((c) => c.id === columnId);
-      if (idx === -1) return prev;
-      if (direction === "left" && idx === 0) return prev;
-      if (direction === "right" && idx === prev.length - 1) return prev;
+  const moveColumn = async (columnId: string, direction: "left" | "right") => {
+    const idx = columns.findIndex((c) => c.id === columnId);
+    if (idx === -1) return;
+    if (direction === "left" && idx === 0) return;
+    if (direction === "right" && idx === columns.length - 1) return;
 
-      const newCols = [...prev];
-      const targetIdx = direction === "left" ? idx - 1 : idx + 1;
-      const [removed] = newCols.splice(idx, 1);
-      newCols.splice(targetIdx, 0, removed);
+    const newCols = [...columns];
+    const targetIdx = direction === "left" ? idx - 1 : idx + 1;
+    const [removed] = newCols.splice(idx, 1);
+    newCols.splice(targetIdx, 0, removed);
 
-      return newCols.map((col, i) => ({ ...col, order: i }));
-    });
+    const reordered = newCols.map((col, i) => ({ ...col, order: i }));
+    setColumns(reordered);
+
+    if (user && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      for (const col of reordered) {
+        await PlannerService.upsertColumn(user.id, col);
+      }
+      setSyncStatus("synced");
+    }
   };
 
   // Limpar todas as tarefas de uma etapa específica
-  const clearColumnTasks = (columnId: string) => {
+  const clearColumnTasks = async (columnId: string) => {
+    const tasksToRemove = tasks.filter((t) => t.column === columnId);
     setTasks((prev) => prev.filter((t) => t.column !== columnId));
+
+    if (user && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      for (const t of tasksToRemove) {
+        await PlannerService.deleteTask(user.id, t.id);
+      }
+      setSyncStatus("synced");
+    }
+    toast.success("Etapa esvaziada");
   };
 
   // Resetar colunas para o padrão de fábrica
-  const resetToDefaultColumns = () => {
+  const resetToDefaultColumns = async () => {
     setColumns(DEFAULT_COLUMNS);
     const validIds = new Set(DEFAULT_COLUMNS.map((c) => c.id));
     setTasks((prev) =>
       prev.map((t) => (validIds.has(t.column) ? t : { ...t, column: "todo" }))
     );
+
+    if (user && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      await PlannerService.initializeUserBoard(user.id, DEFAULT_COLUMNS, tasks);
+      setSyncStatus("synced");
+    }
   };
 
   // -------------------------------------------------------------
@@ -255,7 +329,9 @@ export function usePlanner() {
   // -------------------------------------------------------------
 
   // Mover tarefa entre colunas (Drag & Drop)
-  const moveTask = (taskId: string, targetColumn: string, targetIndex?: number) => {
+  const moveTask = async (taskId: string, targetColumn: string, targetIndex?: number) => {
+    let movedTask: PlannerTask | null = null;
+
     setTasks((prev) => {
       const targetTask = prev.find((t) => t.id === taskId);
       if (!targetTask) return prev;
@@ -265,6 +341,7 @@ export function usePlanner() {
         ...targetTask,
         column: targetColumn,
       };
+      movedTask = updatedTask;
 
       if (typeof targetIndex === "number") {
         const columnTasks = remaining.filter((t) => t.column === targetColumn);
@@ -279,10 +356,22 @@ export function usePlanner() {
 
       return [...remaining, updatedTask];
     });
+
+    if (user && movedTask && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      const res = await PlannerService.upsertTask(user.id, movedTask);
+      if (res.tableMissing) {
+        setSyncStatus("needs_schema");
+      } else if (!res.success) {
+        setSyncStatus("error");
+      } else {
+        setSyncStatus("synced");
+      }
+    }
   };
 
   // Adicionar nova tarefa
-  const addTask = (data: {
+  const addTask = async (data: {
     title: string;
     description?: string;
     category: TaskCategory;
@@ -300,20 +389,56 @@ export function usePlanner() {
       createdAt: new Date().toISOString(),
       order: tasks.filter((t) => t.column === data.column).length,
     };
+
+    // Otimista
     setTasks((prev) => [newTask, ...prev]);
+
+    // Supabase
+    if (user && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      const res = await PlannerService.upsertTask(user.id, newTask);
+      if (res.tableMissing) {
+        setSyncStatus("needs_schema");
+      } else if (!res.success) {
+        toast.error("Erro ao salvar tarefa no Supabase");
+        setSyncStatus("error");
+      } else {
+        setSyncStatus("synced");
+      }
+    }
+
+    toast.success(`Card ${newTask.code} criado!`);
   };
 
   // Excluir tarefa
-  const deleteTask = (id: string) => {
+  const deleteTask = async (id: string) => {
+    const taskToDelete = tasks.find((t) => t.id === id);
     setTasks((prev) => prev.filter((t) => t.id !== id));
+
+    if (user && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      const res = await PlannerService.deleteTask(user.id, id);
+      if (res.tableMissing) {
+        setSyncStatus("needs_schema");
+      } else if (!res.success) {
+        toast.error("Erro ao remover tarefa no Supabase");
+        setSyncStatus("error");
+      } else {
+        setSyncStatus("synced");
+      }
+    }
+
+    toast.success(taskToDelete ? `Card ${taskToDelete.code} removido` : "Card removido");
   };
 
   // Atualizar tarefa
-  const updateTask = (id: string, updates: Partial<PlannerTask>) => {
+  const updateTask = async (id: string, updates: Partial<PlannerTask>) => {
+    let updatedTargetTask: PlannerTask | null = null;
+
     setTasks((prev) =>
       prev.map((t) => {
         if (t.id !== id) return t;
-        return {
+        const updated = {
           ...t,
           ...updates,
           title: updates.title !== undefined ? sanitizeString(updates.title, 120) : t.title,
@@ -324,8 +449,42 @@ export function usePlanner() {
                 : undefined
               : t.description,
         };
+        updatedTargetTask = updated;
+        return updated;
       })
     );
+
+    if (user && updatedTargetTask && syncStatus !== "needs_schema") {
+      setSyncStatus("syncing");
+      const res = await PlannerService.upsertTask(user.id, updatedTargetTask);
+      if (res.tableMissing) {
+        setSyncStatus("needs_schema");
+      } else if (!res.success) {
+        setSyncStatus("error");
+      } else {
+        setSyncStatus("synced");
+      }
+    }
+  };
+
+  // Sincronizar dados locais manualmente para a nuvem
+  const syncLocalToCloud = async () => {
+    if (!user) {
+      toast.info("Faça login com sua conta para salvar seus dados na nuvem.");
+      return;
+    }
+    setSyncStatus("syncing");
+    const res = await PlannerService.syncLocalBoardToCloud(user.id, columns, tasks);
+    if (res.tableMissing) {
+      setSyncStatus("needs_schema");
+      toast.warning("Execute supabase/schema.sql no Supabase para habilitar a nuvem.");
+    } else if (res.success) {
+      setSyncStatus("synced");
+      toast.success("Seu quadro foi sincronizado na nuvem com sucesso!");
+    } else {
+      setSyncStatus("error");
+      toast.error(`Falha ao sincronizar: ${res.error}`);
+    }
   };
 
   // Tarefas filtradas por busca e tags
@@ -351,7 +510,8 @@ export function usePlanner() {
     tasks: filteredTasks,
     allTasks: tasks,
     isLoaded,
-    isCloudConnected: isSupabaseConfigured,
+    syncStatus,
+    syncErrorMessage,
     searchQuery,
     setSearchQuery,
     categoryFilter,
@@ -370,5 +530,8 @@ export function usePlanner() {
     addTask,
     deleteTask,
     updateTask,
+    // Sync operations
+    syncLocalToCloud,
+    refreshData: loadData,
   };
 }

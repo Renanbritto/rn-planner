@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   KanbanColumnDef,
   ColumnColor,
@@ -32,15 +32,15 @@ export function ColumnActionsDialog({
   column,
   onUpdateColumn,
 }: ColumnActionsDialogProps) {
-  const [title, setTitle] = useState("");
-  const [color, setColor] = useState<ColumnColor>("cyan");
+  const [prevColumn, setPrevColumn] = useState(column);
+  const [title, setTitle] = useState(column?.title || "");
+  const [color, setColor] = useState<ColumnColor>(column?.color || "cyan");
 
-  useEffect(() => {
-    if (column) {
-      setTitle(column.title);
-      setColor(column.color);
-    }
-  }, [column, open]);
+  if (column !== prevColumn) {
+    setPrevColumn(column);
+    setTitle(column?.title || "");
+    setColor(column?.color || "cyan");
+  }
 
   if (!column) return null;
 

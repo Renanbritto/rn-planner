@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { KanbanColumnDef, PlannerTask } from "@/types/planner";
+import { KanbanColumnDef, PlannerTask, ColumnColor } from "@/types/planner";
 import { KanbanColumn } from "./kanban-column";
 import { ColumnActionsDialog } from "./column-actions-dialog";
 import { DeleteColumnDialog } from "./delete-column-dialog";
@@ -14,9 +14,9 @@ interface KanbanBoardProps {
   onMoveTask: (taskId: string, targetColumn: string) => void;
   onDeleteTask: (id: string) => void;
   onQuickAdd: (columnId: string) => void;
-  onAddColumn: (title: string, color?: any) => void;
-  onUpdateColumn: (columnId: string, updates: any) => void;
-  onDeleteColumn: (columnId: string, options?: any) => void;
+  onAddColumn: (title: string, color?: ColumnColor) => void;
+  onUpdateColumn: (columnId: string, updates: { title?: string; color?: ColumnColor }) => void;
+  onDeleteColumn: (columnId: string, options?: { moveTasksToColumnId?: string }) => void;
   onMoveColumn: (columnId: string, direction: "left" | "right") => void;
   onClearColumnTasks: (columnId: string) => void;
 }

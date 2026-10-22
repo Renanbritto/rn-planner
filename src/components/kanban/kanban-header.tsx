@@ -10,16 +10,20 @@ import {
   Check,
   Columns3,
   ListTodo,
+  AlertTriangle,
 } from "lucide-react";
 import { PlannerTask } from "@/types/planner";
+import { SyncStatus } from "@/lib/planner-store";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BrandLogo } from "@/components/brand-logo";
 import { UserButton } from "@/components/auth/user-button";
+import { SupabaseSetupDialog } from "./supabase-setup-dialog";
 
 interface KanbanHeaderProps {
   tasks: PlannerTask[];
   columnsCount: number;
+  syncStatus: SyncStatus;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   categoryFilter: string;
@@ -28,11 +32,13 @@ interface KanbanHeaderProps {
   setPriorityFilter: (p: string) => void;
   onOpenNewCard: () => void;
   onOpenNewColumn: () => void;
+  onSyncLocalToCloud?: () => void;
 }
 
 export function KanbanHeader({
   tasks,
   columnsCount,
+  syncStatus,
   searchQuery,
   setSearchQuery,
   categoryFilter,
@@ -41,8 +47,10 @@ export function KanbanHeader({
   setPriorityFilter,
   onOpenNewCard,
   onOpenNewColumn,
+  onSyncLocalToCloud,
 }: KanbanHeaderProps) {
   const [copied, setCopied] = useState(false);
+  const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
 
   const totalTasks = tasks.length;
   const criticalCount = tasks.filter((t) => t.priority === "critical").length;
@@ -92,13 +100,57 @@ export function KanbanHeader({
       {/* Top Row: Brand & Quick Actions */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Brand Logo in Comfortaa */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <BrandLogo size={36} showText={true} />
           <div className="hidden sm:block h-6 w-px bg-white/10 mx-1" />
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
             <span className="font-semibold text-slate-300">OBSIDIAN GLASS</span>
           </div>
+
+          {/* Sync Status Badge */}
+          {syncStatus === "synced" && (
+            <div className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[11px] font-mono font-medium shadow-[0_0_8px_rgba(16,185,129,0.15)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
+              <span className="font-comfortaa">Nuvem Ativa</span>
+            </div>
+          )}
+
+          {syncStatus === "syncing" && (
+            <div className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-400 text-[11px] font-mono font-medium">
+              <div className="h-2.5 w-2.5 animate-spin rounded-full border border-cyan-400 border-t-transparent" />
+              <span className="font-comfortaa">Salvando...</span>
+            </div>
+          )}
+
+          {syncStatus === "needs_schema" && (
+            <button
+              onClick={() => setIsSetupDialogOpen(true)}
+              className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 text-[11px] font-comfortaa font-bold transition-all cursor-pointer shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+              title="Clique para ver instruções de ativação das tabelas no Supabase"
+            >
+              <AlertTriangle className="h-3 w-3 text-amber-400 animate-pulse" />
+              <span>Configurar Banco</span>
+            </button>
+          )}
+
+          {syncStatus === "local" && (
+            <button
+              onClick={onSyncLocalToCloud}
+              className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-[#0b0f1a]/95 text-slate-400 hover:text-slate-200 text-[11px] font-comfortaa transition-all cursor-pointer"
+              title="Salvo apenas neste navegador. Faça login para salvar na nuvem."
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+              <span>Modo Local</span>
+            </button>
+          )}
+
+          {syncStatus === "error" && (
+            <div className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-400 text-[11px] font-mono font-medium">
+              <AlertCircle className="h-3 w-3 text-rose-400" />
+              <span className="font-comfortaa">Offline / Erro</span>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -278,6 +330,11 @@ export function KanbanHeader({
           </select>
         </div>
       </div>
+
+      <SupabaseSetupDialog
+        open={isSetupDialogOpen}
+        onOpenChange={setIsSetupDialogOpen}
+      />
     </div>
   );
 }

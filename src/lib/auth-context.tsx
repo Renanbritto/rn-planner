@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         subscription.unsubscribe();
       };
     } else {
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
     }
   }, []);
 
@@ -97,9 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Erro ao autenticar com Google no Supabase:", error);
         alert(`Erro de autenticação: ${error.message}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Erro inesperado no login:", err);
-      alert(`Erro inesperado: ${err?.message || err}`);
+      alert(`Erro inesperado: ${(err as Error)?.message || err}`);
     }
   };
 

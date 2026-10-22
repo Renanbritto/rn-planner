@@ -30,6 +30,9 @@ export default function PlannerPage() {
     moveTask,
     addTask,
     deleteTask,
+    // Sync
+    syncStatus,
+    syncLocalToCloud,
   } = usePlanner();
 
   const [isCardDialogOpen, setIsCardDialogOpen] = useState(false);
@@ -73,6 +76,7 @@ export default function PlannerPage() {
         <KanbanHeader
           tasks={allTasks}
           columnsCount={columns.length}
+          syncStatus={syncStatus}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           categoryFilter={categoryFilter}
@@ -81,6 +85,7 @@ export default function PlannerPage() {
           setPriorityFilter={setPriorityFilter}
           onOpenNewCard={handleOpenGeneralAdd}
           onOpenNewColumn={() => setIsColumnDialogOpen(true)}
+          onSyncLocalToCloud={syncLocalToCloud}
         />
 
         {/* Quadro Kanban Dinâmico com Drag & Drop */}

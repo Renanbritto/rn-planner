@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlannerTask, Priority, TaskCategory } from "@/types/planner";
+import { PlannerTask, TaskCategory } from "@/types/planner";
 import { Calendar, Trash2, GripVertical } from "lucide-react";
 
 interface KanbanCardProps {

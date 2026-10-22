@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { KanbanColumnDef, Priority, TaskCategory } from "@/types/planner";
 import {
   Dialog,
@@ -37,6 +37,7 @@ export function NewCardDialog({
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<TaskCategory>("work");
   const [priority, setPriority] = useState<Priority>("medium");
+  const [prevDefaultColumn, setPrevDefaultColumn] = useState(defaultColumn);
   const [column, setColumn] = useState<string>(
     defaultColumn || columns[0]?.id || "todo"
   );
@@ -44,13 +45,10 @@ export function NewCardDialog({
     new Date().toISOString().split("T")[0]
   );
 
-  useEffect(() => {
-    if (defaultColumn) {
-      setColumn(defaultColumn);
-    } else if (columns.length > 0 && !columns.some((c) => c.id === column)) {
-      setColumn(columns[0].id);
-    }
-  }, [defaultColumn, columns, open]);
+  if (defaultColumn !== prevDefaultColumn) {
+    setPrevDefaultColumn(defaultColumn);
+    setColumn(defaultColumn || columns[0]?.id || "todo");
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
