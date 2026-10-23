@@ -6,11 +6,13 @@ import { usePlanner } from "@/lib/planner-store";
 import { LoginView } from "@/components/auth/login-view";
 import { KanbanHeader } from "@/components/kanban/kanban-header";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
+import { WhiteboardWrapper } from "@/components/whiteboard/whiteboard-wrapper";
 import { NewCardDialog } from "@/components/kanban/new-card-dialog";
 import { NewColumnDialog } from "@/components/kanban/new-column-dialog";
 import { Code2 } from "lucide-react";
 
 export default function PlannerPage() {
+  const [activeTab, setActiveTab] = useState<"kanban" | "whiteboard">("kanban");
   const { user, loading: authLoading, isGuestMode } = useAuth();
   const {
     columns,
@@ -109,23 +111,31 @@ export default function PlannerPage() {
           onOpenNewCard={handleOpenGeneralAdd}
           onOpenNewColumn={() => setIsColumnDialogOpen(true)}
           onSyncLocalToCloud={syncLocalToCloud}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
         />
 
-        {/* Quadro Kanban Dinâmico com Drag & Drop */}
-        <div className="flex-1 w-full">
-          <KanbanBoard
-            columns={columns}
-            tasks={tasks}
-            onMoveTask={moveTask}
-            onDeleteTask={deleteTask}
-            onQuickAdd={handleQuickAdd}
-            onAddColumn={addColumn}
-            onUpdateColumn={updateColumn}
-            onDeleteColumn={deleteColumn}
-            onMoveColumn={moveColumn}
-            onClearColumnTasks={clearColumnTasks}
-          />
-        </div>
+        {/* Alternância entre Quadro Kanban e Whiteboard Canvas (Excalidraw) */}
+        {activeTab === "kanban" ? (
+          <div className="flex-1 w-full animate-in fade-in duration-200">
+            <KanbanBoard
+              columns={columns}
+              tasks={tasks}
+              onMoveTask={moveTask}
+              onDeleteTask={deleteTask}
+              onQuickAdd={handleQuickAdd}
+              onAddColumn={addColumn}
+              onUpdateColumn={updateColumn}
+              onDeleteColumn={deleteColumn}
+              onMoveColumn={moveColumn}
+              onClearColumnTasks={clearColumnTasks}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 w-full animate-in fade-in duration-200">
+            <WhiteboardWrapper />
+          </div>
+        )}
 
         {/* Footer Obsidian Glass */}
         <footer className="mt-auto flex flex-col items-center justify-between gap-4 border-t border-slate-200 dark:border-white/10 pt-4 text-xs text-slate-500 dark:text-slate-400 sm:flex-row">
