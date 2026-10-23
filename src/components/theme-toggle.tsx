@@ -7,7 +7,7 @@ import { useTheme } from "next-themes";
 const emptySubscribe = () => () => {};
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const mounted = React.useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -16,16 +16,17 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="h-9 w-9 rounded-xl border border-white/10 bg-white/[0.04]" />
+      <div className="h-9 w-9 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/[0.04]" />
     );
   }
 
-  const isDark = theme === "dark";
+  const currentTheme = resolvedTheme || theme;
+  const isDark = currentTheme === "dark";
 
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 dark:border-white/10 hover:border-white/20 dark:hover:border-white/20 bg-white/[0.06] dark:bg-white/[0.06] hover:bg-white/[0.12] dark:hover:bg-white/[0.12] text-slate-800 dark:text-slate-200 transition-all cursor-pointer hover:shadow-sm"
+      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-[#0b0f1a]/95 hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-xs"
       title={isDark ? "Alternar para Modo Claro" : "Alternar para Modo Obsidian"}
     >
       {isDark ? (

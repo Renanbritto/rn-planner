@@ -55,11 +55,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${comfortaa.variable} antialiased`}
     >
-      <body className="min-h-screen bg-[#090d16] text-slate-100 selection:bg-cyan-500/20 selection:text-cyan-400 font-sans antialiased">
+      <body className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 selection:bg-cyan-500/20 selection:text-cyan-600 dark:selection:text-cyan-400 font-sans antialiased transition-colors duration-200">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
-          enableSystem={false}
+          enableSystem={true}
           disableTransitionOnChange
         >
           <AuthProvider>
@@ -67,17 +67,8 @@ export default function RootLayout({
               {children}
               <Toaster
                 position="bottom-right"
-                theme="dark"
                 richColors
                 closeButton
-                toastOptions={{
-                  style: {
-                    background: "rgba(11, 15, 26, 0.95)",
-                    backdropFilter: "blur(16px)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    color: "#f1f5f9",
-                  },
-                }}
               />
             </TooltipProvider>
           </AuthProvider>
