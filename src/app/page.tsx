@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 import { usePlanner } from "@/lib/planner-store";
+import { LoginView } from "@/components/auth/login-view";
 import { KanbanHeader } from "@/components/kanban/kanban-header";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { NewCardDialog } from "@/components/kanban/new-card-dialog";
@@ -9,6 +11,7 @@ import { NewColumnDialog } from "@/components/kanban/new-column-dialog";
 import { Code2 } from "lucide-react";
 
 export default function PlannerPage() {
+  const { user, loading: authLoading, isGuestMode } = useAuth();
   const {
     columns,
     tasks,
@@ -49,6 +52,26 @@ export default function PlannerPage() {
     setIsCardDialogOpen(true);
   };
 
+  // 1. Carregando autenticação
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#090d16] text-slate-400">
+        <div className="flex items-center gap-3 bg-[#0b0f1a]/95 backdrop-blur-2xl px-6 py-4 rounded-2xl border border-white/10 shadow-2xl">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+          <span className="text-xs uppercase tracking-widest font-mono font-bold text-slate-300">
+            Conectando Workspace...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Não autenticado e não convidado: Página Inicial de Login
+  if (!user && !isGuestMode) {
+    return <LoginView />;
+  }
+
+  // 3. Carregando dados do quadro
   if (!isLoaded) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#090d16] text-slate-400">

@@ -14,21 +14,37 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   isCloudConfigured: boolean;
+  isGuestMode: boolean;
   signInWithGoogle: () => Promise<void>;
+  switchAccount: () => Promise<void>;
   signOut: () => Promise<void>;
+  continueAsGuest: () => void;
+  exitGuestMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   isCloudConfigured: false,
+  isGuestMode: false,
   signInWithGoogle: async () => {},
+  switchAccount: async () => {},
   signOut: async () => {},
+  continueAsGuest: () => {},
+  exitGuestMode: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem("rn_planner_guest_mode") === "true";
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     try {
@@ -49,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               "Usuário",
             avatarUrl: session.user.user_metadata?.avatar_url,
           });
+          setIsGuestMode(false);
         }
         setLoading(false);
       });
@@ -66,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               "Usuário",
             avatarUrl: session.user.user_metadata?.avatar_url,
           });
+          setIsGuestMode(false);
         } else {
           setUser(null);
         }
@@ -103,11 +121,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const switchAccount = async () => {
+    try {
+      if (!supabase) {
+        alert("Cliente Supabase não inicializado.");
+        return;
+      }
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      // Faz logout prévio para limpar cookies de sessão e abre seletor de contas do Google
+      await supabase.auth.signOut();
+      setUser(null);
+      setIsGuestMode(false);
+      try {
+        sessionStorage.removeItem("rn_planner_guest_mode");
+      } catch {
+        // Ignore
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            prompt: "select_account",
+          },
+        },
+      });
+      if (error) {
+        console.error("Erro ao alternar de conta no Google:", error);
+        alert(`Erro ao alternar conta: ${error.message}`);
+      }
+    } catch (err: unknown) {
+      console.error("Erro inesperado ao alternar de conta:", err);
+      alert(`Erro inesperado: ${(err as Error)?.message || err}`);
+    }
+  };
+
   const signOut = async () => {
     if (isSupabaseConfigured && supabase) {
       await supabase.auth.signOut();
     }
     setUser(null);
+    setIsGuestMode(false);
+    try {
+      sessionStorage.removeItem("rn_planner_guest_mode");
+    } catch {
+      // Ignore
+    }
+  };
+
+  const continueAsGuest = () => {
+    setIsGuestMode(true);
+    try {
+      sessionStorage.setItem("rn_planner_guest_mode", "true");
+    } catch {
+      // Ignore
+    }
+  };
+
+  const exitGuestMode = () => {
+    setIsGuestMode(false);
+    try {
+      sessionStorage.removeItem("rn_planner_guest_mode");
+    } catch {
+      // Ignore
+    }
   };
 
   return (
@@ -116,8 +194,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         loading,
         isCloudConfigured: isSupabaseConfigured,
+        isGuestMode,
         signInWithGoogle,
+        switchAccount,
         signOut,
+        continueAsGuest,
+        exitGuestMode,
       }}
     >
       {children}

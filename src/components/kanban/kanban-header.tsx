@@ -11,9 +11,11 @@ import {
   Columns3,
   ListTodo,
   AlertTriangle,
+  LogOut,
 } from "lucide-react";
 import { PlannerTask } from "@/types/planner";
 import { SyncStatus } from "@/lib/planner-store";
+import { useAuth } from "@/lib/auth-context";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BrandLogo } from "@/components/brand-logo";
@@ -51,6 +53,7 @@ export function KanbanHeader({
 }: KanbanHeaderProps) {
   const [copied, setCopied] = useState(false);
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
+  const { user, isGuestMode, exitGuestMode } = useAuth();
 
   const totalTasks = tasks.length;
   const criticalCount = tasks.filter((t) => t.priority === "critical").length;
@@ -177,7 +180,19 @@ export function KanbanHeader({
           {/* Alternador de Tema */}
           <ThemeToggle />
 
-          {/* Auth Button */}
+          {/* Se estiver no Modo Convidado: Botão para Retornar ao Login */}
+          {isGuestMode && !user && (
+            <button
+              onClick={exitGuestMode}
+              className="flex items-center gap-1.5 h-9 px-3 rounded-xl border border-white/10 hover:border-white/20 bg-[#0b0f1a]/95 text-slate-400 hover:text-white text-xs font-comfortaa transition-all cursor-pointer shadow-xs"
+              title="Voltar à tela inicial de login"
+            >
+              <LogOut className="h-3.5 w-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Tela de Login</span>
+            </button>
+          )}
+
+          {/* Auth Button com Perfil, Trocar de Conta e Logout */}
           <UserButton />
 
           {/* Botão Nova Etapa */}
