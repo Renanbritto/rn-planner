@@ -18,7 +18,7 @@ export function UserButton() {
 
   if (loading) {
     return (
-      <div className="h-9 w-24 rounded-xl border border-white/10 bg-[#0b0f1a]/95 backdrop-blur-2xl animate-pulse" />
+      <div className="h-9 w-24 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl animate-pulse" />
     );
   }
 
@@ -32,7 +32,7 @@ export function UserButton() {
           setIsProcessing(false);
         }}
         disabled={isProcessing}
-        className="flex items-center gap-2 h-9 px-3.5 rounded-xl text-xs font-comfortaa font-medium text-slate-200 hover:text-white bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-white/[0.08] border border-white/10 hover:border-cyan-400/40 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+        className="flex items-center gap-2 h-9 px-3.5 rounded-xl text-xs font-comfortaa font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-50 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs disabled:opacity-50"
         title="Fazer login para sincronizar suas tarefas na nuvem"
       >
         <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
@@ -71,42 +71,42 @@ export function UserButton() {
     <div className="flex items-center gap-1.5">
       {/* Dropdown com Perfil e Ações de Conta */}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-2 h-9 pl-1.5 pr-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-white/[0.08] transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/50">
+        <DropdownMenuTrigger className="flex items-center gap-2 h-9 pl-1.5 pr-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/50">
           {user.avatarUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={user.avatarUrl}
               alt={user.name}
-              className="h-6 w-6 rounded-lg object-cover border border-white/10"
+              className="h-6 w-6 rounded-lg object-cover border border-slate-200 dark:border-white/10"
             />
           ) : (
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500/20 text-[11px] font-mono font-bold text-cyan-400 border border-cyan-500/30">
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500/10 dark:bg-cyan-500/20 text-[11px] font-mono font-bold text-cyan-600 dark:text-cyan-400 border border-cyan-500/30">
               {initials}
             </div>
           )}
-          <span className="font-comfortaa text-xs font-medium text-slate-200 max-w-[110px] truncate">
+          <span className="font-comfortaa text-xs font-medium text-slate-800 dark:text-slate-200 max-w-[110px] truncate">
             {user.name}
           </span>
-          <ChevronDown className="h-3 w-3 text-slate-400 opacity-60" />
+          <ChevronDown className="h-3 w-3 text-slate-400 dark:text-slate-400 opacity-70" />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           align="end"
-          className="w-64 rounded-2xl border-white/10 bg-[#0b0f1a]/95 backdrop-blur-2xl p-2 text-slate-200 shadow-2xl"
+          className="w-64 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-2 text-slate-800 dark:text-slate-200 shadow-2xl"
         >
           {/* Identificação do Usuário */}
           <DropdownMenuLabel className="px-3 py-2 text-xs">
             <div className="flex items-center gap-2 mb-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
-              <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider font-semibold">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
+              <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-semibold">
                 Conectado
               </span>
             </div>
-            <p className="font-comfortaa font-bold text-sm text-white truncate">{user.name}</p>
-            <p className="font-mono text-[11px] font-normal text-slate-400 truncate mt-0.5">{user.email}</p>
+            <p className="font-comfortaa font-bold text-sm text-slate-900 dark:text-white truncate">{user.name}</p>
+            <p className="font-mono text-[11px] font-normal text-slate-500 dark:text-slate-400 truncate mt-0.5">{user.email}</p>
           </DropdownMenuLabel>
 
-          <DropdownMenuSeparator className="bg-white/10 my-1.5" />
+          <DropdownMenuSeparator className="bg-slate-200 dark:bg-white/10 my-1.5" />
 
           {/* Opção: Trocar de Conta */}
           <DropdownMenuItem
@@ -116,12 +116,12 @@ export function UserButton() {
               setIsProcessing(false);
             }}
             disabled={isProcessing}
-            className="flex items-center gap-2.5 px-3 py-2 text-xs font-comfortaa text-slate-300 hover:text-white hover:bg-cyan-500/10 rounded-xl cursor-pointer transition-colors"
+            className="flex items-center gap-2.5 px-3 py-2 text-xs font-comfortaa text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-cyan-500/10 rounded-xl cursor-pointer transition-colors"
           >
-            <ArrowLeftRight className="h-3.5 w-3.5 text-cyan-400" />
+            <ArrowLeftRight className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
             <div className="flex flex-col">
               <span className="font-medium">Trocar de conta</span>
-              <span className="text-[10px] font-sans text-slate-500">Alternar usuário do Google</span>
+              <span className="text-[10px] font-sans text-slate-400 dark:text-slate-500">Alternar usuário do Google</span>
             </div>
           </DropdownMenuItem>
 
@@ -133,12 +133,12 @@ export function UserButton() {
               setIsProcessing(false);
             }}
             disabled={isProcessing}
-            className="flex items-center gap-2.5 px-3 py-2 text-xs font-comfortaa text-rose-400 hover:bg-rose-500/10 rounded-xl cursor-pointer transition-colors mt-1"
+            className="flex items-center gap-2.5 px-3 py-2 text-xs font-comfortaa text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl cursor-pointer transition-colors mt-1"
           >
-            <LogOut className="h-3.5 w-3.5 text-rose-400" />
+            <LogOut className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
             <div className="flex flex-col">
               <span className="font-medium">Sair da conta</span>
-              <span className="text-[10px] font-sans text-slate-500">Encerrar sessão neste aparelho</span>
+              <span className="text-[10px] font-sans text-slate-400 dark:text-slate-500">Encerrar sessão neste aparelho</span>
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -152,7 +152,7 @@ export function UserButton() {
           setIsProcessing(false);
         }}
         disabled={isProcessing}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 hover:border-rose-500/40 bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-all cursor-pointer shadow-xs"
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:border-rose-500/40 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer shadow-xs disabled:opacity-50"
         title="Sair da conta"
       >
         <LogOut className="h-4 w-4" />
