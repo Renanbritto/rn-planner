@@ -5,10 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
-  Sparkles,
   ArrowRight,
-  ShieldCheck,
-  Zap,
   Kanban,
   Database,
   Layers,
@@ -49,11 +46,6 @@ export function LoginView() {
         <BrandLogo size={38} showText={true} />
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-[#0b0f1a]/80 backdrop-blur-xl text-xs font-mono text-slate-600 dark:text-slate-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-500 animate-pulse" />
-            <span>OBSIDIAN V2.0</span>
-          </div>
-
           <ThemeToggle />
 
           <button
@@ -70,11 +62,6 @@ export function LoginView() {
       <main className="relative z-10 mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8 flex flex-col items-center justify-center gap-12 my-auto">
         {/* Hero Copy */}
         <div className="flex flex-col items-center text-center max-w-2xl gap-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-600 dark:text-cyan-300 text-xs font-comfortaa font-medium shadow-[0_0_15px_rgba(6,182,212,0.15)]">
-            <Sparkles className="h-3.5 w-3.5 text-cyan-500 dark:text-cyan-400" />
-            <span>Seu Personal Operating System</span>
-          </div>
-
           <h1 className="font-comfortaa text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
             Execute com foco.{" "}
             <span className="bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 dark:from-cyan-400 dark:via-teal-300 dark:to-emerald-400 bg-clip-text text-transparent">
@@ -93,7 +80,7 @@ export function LoginView() {
           {/* Subtle Outer Neon Border Glow */}
           <div className="absolute -inset-0.5 rounded-3xl bg-gradient-to-r from-cyan-500/20 via-rose-500/15 to-emerald-500/20 blur-lg opacity-75" />
 
-          <div className="relative flex flex-col gap-5 rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-7 sm:p-8 shadow-xl dark:shadow-2xl">
+          <div className="relative flex flex-col gap-6 rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-7 sm:p-8 shadow-xl dark:shadow-2xl">
             <div className="flex flex-col gap-1 text-center">
               <h2 className="font-comfortaa text-xl font-bold text-slate-900 dark:text-white">
                 Entrar no rn-planner
@@ -133,38 +120,6 @@ export function LoginView() {
               )}
               <span>{isLoading ? "Conectando ao Google..." : "Continuar com o Google"}</span>
             </button>
-
-            {/* Divisor */}
-            <div className="relative flex items-center justify-center my-1">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200 dark:border-white/10" />
-              </div>
-              <span className="relative bg-white dark:bg-[#0b0f1a] px-3 font-mono text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                ou
-              </span>
-            </div>
-
-            {/* Entrar como convidado */}
-            <button
-              onClick={continueAsGuest}
-              className="flex items-center justify-center gap-2 w-full h-11 px-4 rounded-2xl bg-slate-50 dark:bg-transparent hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-comfortaa text-xs font-medium transition-all cursor-pointer"
-            >
-              <span>Experimentar como Convidado (Modo Local)</span>
-              <ArrowRight className="h-3.5 w-3.5 text-cyan-500 dark:text-cyan-400" />
-            </button>
-
-            {/* Trust Badges */}
-            <div className="flex items-center justify-center gap-4 pt-2 text-[11px] text-slate-500 dark:text-slate-400">
-              <div className="flex items-center gap-1">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
-                <span>Nuvem Criptografada</span>
-              </div>
-              <div className="h-3 w-px bg-slate-200 dark:bg-white/10" />
-              <div className="flex items-center gap-1">
-                <Zap className="h-3.5 w-3.5 text-cyan-500 dark:text-cyan-400" />
-                <span>Zero Latência</span>
-              </div>
-            </div>
           </div>
         </div>
 
