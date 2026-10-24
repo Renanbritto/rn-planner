@@ -144,9 +144,9 @@ export function WhiteboardCanvas() {
           </div>
           <div>
             <h2 className="font-comfortaa text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <span>Whiteboard & Diagramas</span>
+              <span>Excalidraw</span>
               <span className="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300">
-                Excalidraw Engine
+                Whiteboard
               </span>
             </h2>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans hidden sm:block">

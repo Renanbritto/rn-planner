@@ -14,6 +14,7 @@ import {
   LogOut,
   Kanban,
   PenTool,
+  Menu,
 } from "lucide-react";
 import { PlannerTask } from "@/types/planner";
 import { SyncStatus } from "@/lib/planner-store";
@@ -39,6 +40,7 @@ interface KanbanHeaderProps {
   onSyncLocalToCloud?: () => void;
   activeTab?: "kanban" | "whiteboard";
   setActiveTab?: (tab: "kanban" | "whiteboard") => void;
+  onToggleMobileMenu?: () => void;
 }
 
 export function KanbanHeader({
@@ -56,6 +58,7 @@ export function KanbanHeader({
   onSyncLocalToCloud,
   activeTab = "kanban",
   setActiveTab,
+  onToggleMobileMenu,
 }: KanbanHeaderProps) {
   const [copied, setCopied] = useState(false);
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
@@ -85,7 +88,7 @@ export function KanbanHeader({
       if (typeof window !== "undefined") {
         if (navigator.share) {
           await navigator.share({
-            title: "planner | Personal Operating System",
+            title: "RN Planner | Personal Operating System",
             text: "Quadro de execução pessoal com etapas personalizadas, foco e métricas.",
             url: window.location.href,
           });
@@ -108,57 +111,43 @@ export function KanbanHeader({
     <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
       {/* Top Row: Brand & Quick Actions */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        {/* Brand Logo in Comfortaa & Tabs */}
-        <div className="flex flex-wrap items-center gap-3">
-          <BrandLogo size={36} showText={true} />
-
-          {/* Segmented Tab Switcher (Kanban vs Whiteboard) */}
-          {setActiveTab && (
-            <div className="flex items-center p-1 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100/90 dark:bg-white/[0.04] backdrop-blur-xl shadow-xs">
-              <button
-                type="button"
-                onClick={() => setActiveTab("kanban")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-comfortaa font-bold transition-all cursor-pointer ${
-                  activeTab === "kanban"
-                    ? "bg-white dark:bg-[#0b0f1a] text-cyan-600 dark:text-cyan-400 shadow-sm border border-slate-200/80 dark:border-white/10"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                <Kanban className="h-3.5 w-3.5" />
-                <span>Quadro Kanban</span>
-                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 font-extrabold border border-cyan-500/20">
-                  {totalTasks}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("whiteboard")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-comfortaa font-bold transition-all cursor-pointer ${
-                  activeTab === "whiteboard"
-                    ? "bg-white dark:bg-[#0b0f1a] text-cyan-600 dark:text-cyan-400 shadow-sm border border-slate-200/80 dark:border-white/10"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                <PenTool className="h-3.5 w-3.5 text-cyan-500" />
-                <span>Whiteboard Canvas</span>
-                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-extrabold border border-emerald-500/20">
-                  Excalidraw
-                </span>
-              </button>
-            </div>
+        {/* Left: Mobile Toggle & Page Title */}
+        <div className="flex items-center gap-3">
+          {/* Botão de Menu para Mobile */}
+          {onToggleMobileMenu && (
+            <button
+              type="button"
+              onClick={onToggleMobileMenu}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 md:hidden text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              title="Abrir menu lateral"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
           )}
 
-          <div className="hidden xl:block h-6 w-px bg-slate-200 dark:bg-white/10 mx-1" />
-
-          {/* Sync Status Badge */}
-          {syncStatus === "synced" && (
-            <div className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-mono font-medium shadow-[0_0_8px_rgba(16,185,129,0.15)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
-              <span className="font-comfortaa">Nuvem Ativa</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="font-comfortaa text-lg font-bold text-slate-900 dark:text-white">
+                {activeTab === "kanban" ? "Card" : "Excalidraw"}
+              </h1>
+              {activeTab === "kanban" ? (
+                <span className="font-mono text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-extrabold border border-cyan-500/20">
+                  {totalTasks} {totalTasks === 1 ? "tarefa" : "tarefas"}
+                </span>
+              ) : (
+                <span className="font-mono text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-extrabold border border-cyan-500/20">
+                  Whiteboard
+                </span>
+              )}
             </div>
-          )}
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
+              {activeTab === "kanban"
+                ? `${columnsCount} etapas de trabalho • Foco e execução`
+                : "Ideação livre, diagramas e arquitetura"}
+            </p>
+          </div>
 
+          {/* Sync Status (apenas quando precisa de ação ou aviso - 'Nuvem Ativa' removida conforme solicitado) */}
           {syncStatus === "syncing" && (
             <div className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-[11px] font-mono font-medium">
               <div className="h-2.5 w-2.5 animate-spin rounded-full border border-cyan-500 dark:border-cyan-400 border-t-transparent" />

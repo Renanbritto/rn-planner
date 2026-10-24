@@ -15,7 +15,7 @@ const comfortaa = Comfortaa({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://rn-planner.vercel.app"),
-  title: "planner | Personal Operating System",
+  title: "RN Planner | Personal Operating System",
   description:
     "Quadro de execução pessoal com arrastar e soltar, foco diário, prioridades e métricas.",
   icons: {
@@ -28,11 +28,11 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "planner | Personal Operating System",
+    title: "RN Planner | Personal Operating System",
     description:
       "Quadro de execução pessoal com arrastar e soltar, foco diário, prioridades e métricas.",
     url: "https://rn-planner.vercel.app",
-    siteName: "planner",
+    siteName: "RN Planner",
     locale: "pt_BR",
     type: "website",
   },

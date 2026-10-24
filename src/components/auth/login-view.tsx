@@ -49,6 +49,8 @@ export function LoginView() {
           <ThemeToggle />
 
           <button
+            type="button"
+            id="guest-login-btn"
             onClick={continueAsGuest}
             className="flex items-center gap-1.5 text-xs font-comfortaa text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
           >
@@ -170,7 +172,7 @@ export function LoginView() {
       <footer className="relative z-10 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 border-t border-slate-200 dark:border-white/10 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-cyan-500" />
-          <span className="font-comfortaa text-slate-600 dark:text-slate-400">rn-planner • Personal Operating System</span>
+          <span className="font-comfortaa text-slate-600 dark:text-slate-400">RN Planner • Personal Operating System</span>
         </div>
         <div className="font-mono text-[11px] text-slate-500">
           Obsidian Glass Architecture
