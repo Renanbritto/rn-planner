@@ -6,6 +6,7 @@ import { KanbanColumn } from "./kanban-column";
 import { ColumnActionsDialog } from "./column-actions-dialog";
 import { DeleteColumnDialog } from "./delete-column-dialog";
 import { NewColumnDialog } from "./new-column-dialog";
+import { CardDetailsDialog } from "./card-details-dialog";
 import { Plus } from "lucide-react";
 
 interface KanbanBoardProps {
@@ -19,6 +20,7 @@ interface KanbanBoardProps {
   onDeleteColumn: (columnId: string, options?: { moveTasksToColumnId?: string }) => void;
   onMoveColumn: (columnId: string, direction: "left" | "right") => void;
   onClearColumnTasks: (columnId: string) => void;
+  onUpdateTask: (id: string, updates: Partial<PlannerTask>) => void;
 }
 
 export function KanbanBoard({
@@ -32,10 +34,16 @@ export function KanbanBoard({
   onDeleteColumn,
   onMoveColumn,
   onClearColumnTasks,
+  onUpdateTask,
 }: KanbanBoardProps) {
   const [editingColumn, setEditingColumn] = useState<KanbanColumnDef | null>(null);
   const [deletingColumn, setDeletingColumn] = useState<KanbanColumnDef | null>(null);
   const [isNewColDialogOpen, setIsNewColDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<PlannerTask | null>(null);
+
+  const activeTask = selectedTask
+    ? tasks.find((t) => t.id === selectedTask.id) || selectedTask
+    : null;
 
   const deletingColumnTasksCount = deletingColumn
     ? tasks.filter((t) => t.column === deletingColumn.id).length
@@ -63,6 +71,7 @@ export function KanbanBoard({
               onOpenDeleteColumn={(c) => setDeletingColumn(c)}
               onMoveColumn={onMoveColumn}
               onClearTasks={onClearColumnTasks}
+              onCardClick={(task) => setSelectedTask(task)}
             />
           );
         })}
@@ -84,6 +93,16 @@ export function KanbanBoard({
           </span>
         </button>
       </div>
+
+      {/* Modal de Detalhes e Edição do Card */}
+      <CardDetailsDialog
+        open={Boolean(selectedTask)}
+        onOpenChange={(open) => !open && setSelectedTask(null)}
+        task={activeTask}
+        columns={columns}
+        onUpdateTask={onUpdateTask}
+        onDeleteTask={onDeleteTask}
+      />
 
       {/* Modal de Personalizar / Renomear Coluna */}
       <ColumnActionsDialog

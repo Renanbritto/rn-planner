@@ -33,6 +33,7 @@ interface KanbanColumnProps {
   onOpenDeleteColumn: (column: KanbanColumnDef) => void;
   onMoveColumn: (columnId: string, direction: "left" | "right") => void;
   onClearTasks: (columnId: string) => void;
+  onCardClick: (task: PlannerTask) => void;
 }
 
 export function KanbanColumn({
@@ -48,6 +49,7 @@ export function KanbanColumn({
   onOpenDeleteColumn,
   onMoveColumn,
   onClearTasks,
+  onCardClick,
 }: KanbanColumnProps) {
   const [isOver, setIsOver] = useState(false);
   const colorConfig = getColumnColorConfig(column.color);
@@ -192,6 +194,7 @@ export function KanbanColumn({
               onDelete={onDeleteTask}
               onDragStart={() => {}}
               onDragEnd={() => setIsOver(false)}
+              onClick={onCardClick}
             />
           ))
         )}

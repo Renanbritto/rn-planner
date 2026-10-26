@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { RichDescriptionEditor } from "./rich-description";
 
 interface NewCardDialogProps {
   open: boolean;
@@ -70,7 +71,7 @@ export function NewCardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl text-slate-900 dark:text-slate-100 sm:max-w-[480px] shadow-2xl dark:shadow-black/60 rounded-3xl">
+      <DialogContent className="border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl text-slate-900 dark:text-slate-100 sm:max-w-[640px] max-h-[90vh] overflow-y-auto shadow-2xl dark:shadow-black/60 rounded-3xl p-6">
         <DialogHeader>
           <DialogTitle className="font-comfortaa text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span>Novo Card</span>
@@ -92,17 +93,15 @@ export function NewCardDialog({
             />
           </div>
 
-          {/* Descrição */}
+          {/* Descrição com Suporte a Markdown & Imagens */}
           <div className="flex flex-col gap-1.5">
             <label className="font-comfortaa text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Descrição (opcional)
+              Descrição (opcional) & Anexos
             </label>
-            <textarea
-              rows={2}
+            <RichDescriptionEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detalhes técnicos ou escopo da tarefa..."
-              className="rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 resize-none font-sans"
+              onChange={setDescription}
+              placeholder="Detalhes técnicos, checklists, ou cole/arraste imagens (Ctrl+V)..."
             />
           </div>
 

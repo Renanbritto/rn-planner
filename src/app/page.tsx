@@ -58,6 +58,7 @@ export default function PlannerPage() {
     moveTask,
     addTask,
     deleteTask,
+    updateTask,
     // Sync
     syncStatus,
     syncLocalToCloud,
@@ -166,6 +167,7 @@ export default function PlannerPage() {
                 onDeleteColumn={deleteColumn}
                 onMoveColumn={moveColumn}
                 onClearColumnTasks={clearColumnTasks}
+                onUpdateTask={updateTask}
               />
             </div>
           ) : (

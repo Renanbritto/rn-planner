@@ -26,6 +26,14 @@ function sanitizeString(str: string, maxLength = 50): string {
     .slice(0, maxLength);
 }
 
+// Sanitizador para descrições ricas com suporte a imagens em base64/URLs
+function sanitizeDescription(str: string, maxLength = 2000000): string {
+  return str
+    .replace(/[<>]/g, "")
+    .trim()
+    .slice(0, maxLength);
+}
+
 function getStoredLocalColumns(): KanbanColumnDef[] {
   if (typeof window === "undefined") return DEFAULT_COLUMNS;
   try {
@@ -385,7 +393,7 @@ export function usePlanner() {
     const newTask: PlannerTask = {
       ...data,
       title: sanitizeString(data.title, 120),
-      description: data.description ? sanitizeString(data.description, 400) : undefined,
+      description: data.description ? sanitizeDescription(data.description) : undefined,
       id: "t-" + Date.now(),
       code: `RN-${nextNumber}`,
       createdAt: new Date().toISOString(),
@@ -447,7 +455,7 @@ export function usePlanner() {
           description:
             updates.description !== undefined
               ? updates.description
-                ? sanitizeString(updates.description, 400)
+                ? sanitizeDescription(updates.description)
                 : undefined
               : t.description,
         };
