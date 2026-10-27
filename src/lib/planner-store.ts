@@ -17,6 +17,7 @@ import {
   PlannerService,
   DEFAULT_COLUMNS,
   INITIAL_TASKS,
+  DEMO_TASK_IDS,
 } from "./services/planner-service";
 import { toast } from "sonner";
 
@@ -126,49 +127,53 @@ function getStoredLocalColumns(): KanbanColumnDef[] {
 
 function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
   if (typeof window === "undefined") {
-    return INITIAL_TASKS.map((t) => ({ ...t, workspaceId: DEFAULT_WORKSPACE.id }));
+    return [];
   }
   try {
     const storedTasks = localStorage.getItem("rn_planner_board_tasks");
     if (storedTasks) {
       const parsedTasks: PlannerTask[] = JSON.parse(storedTasks);
       if (Array.isArray(parsedTasks) && parsedTasks.length > 0) {
-        const colToWs = new Map<string, string>();
-        validColumns.forEach((c) => {
-          const wsId = c.workspaceId || extractWorkspaceIdFromColumnId(c.id);
-          colToWs.set(c.id, wsId);
-        });
+        // Ignora tarefas demo legadas (t-1 .. t-5) para garantir quadro limpo
+        const userTasks = parsedTasks.filter((t) => !DEMO_TASK_IDS.has(t.id));
+        if (userTasks.length > 0) {
+          const colToWs = new Map<string, string>();
+          validColumns.forEach((c) => {
+            const wsId = c.workspaceId || extractWorkspaceIdFromColumnId(c.id);
+            colToWs.set(c.id, wsId);
+          });
 
-        return parsedTasks.map((t) => {
-          const wsFromCol = colToWs.get(t.column) || extractWorkspaceIdFromColumnId(t.column);
-          const rawWs = t.workspaceId;
-          const isCorrupted =
-            rawWs &&
-            (rawWs.includes("-todo") ||
-              rawWs.includes("-in_progress") ||
-              rawWs.includes("-review") ||
-              rawWs.includes("-done"));
+          return userTasks.map((t) => {
+            const wsFromCol = colToWs.get(t.column) || extractWorkspaceIdFromColumnId(t.column);
+            const rawWs = t.workspaceId;
+            const isCorrupted =
+              rawWs &&
+              (rawWs.includes("-todo") ||
+                rawWs.includes("-in_progress") ||
+                rawWs.includes("-review") ||
+                rawWs.includes("-done"));
 
-          const wsId = isCorrupted ? wsFromCol : wsFromCol || rawWs || DEFAULT_WORKSPACE.id;
+            const wsId = isCorrupted ? wsFromCol : wsFromCol || rawWs || DEFAULT_WORKSPACE.id;
 
-          const wsCols = validColumns.filter(
-            (c) => (c.workspaceId || DEFAULT_WORKSPACE.id) === wsId
-          );
-          const wsColIds = new Set(wsCols.map((c) => c.id));
-          const fallbackColId = wsCols[0]?.id || `col-${wsId}-todo`;
+            const wsCols = validColumns.filter(
+              (c) => (c.workspaceId || DEFAULT_WORKSPACE.id) === wsId
+            );
+            const wsColIds = new Set(wsCols.map((c) => c.id));
+            const fallbackColId = wsCols[0]?.id || `col-${wsId}-todo`;
 
-          return {
-            ...t,
-            workspaceId: wsId,
-            column: wsColIds.has(t.column) ? t.column : fallbackColId,
-          };
-        });
+            return {
+              ...t,
+              workspaceId: wsId,
+              column: wsColIds.has(t.column) ? t.column : fallbackColId,
+            };
+          });
+        }
       }
     }
   } catch (e) {
     console.warn("Erro ao carregar tarefas do LocalStorage", e);
   }
-  return INITIAL_TASKS.map((t) => ({ ...t, workspaceId: DEFAULT_WORKSPACE.id }));
+  return [];
 }
 
 export function usePlanner() {

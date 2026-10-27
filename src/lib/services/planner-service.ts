@@ -15,68 +15,10 @@ export const DEFAULT_COLUMNS: KanbanColumnDef[] = [
   { id: "done", title: "Concluído", color: "emerald", order: 3 },
 ];
 
-export const INITIAL_TASKS: PlannerTask[] = [
-  {
-    id: "t-1",
-    code: "RN-101",
-    title: "Revisar pipeline de inferência & métricas do Sentinel",
-    description: "Validar taxa de falso positivos e latência média em produção.",
-    category: "work",
-    priority: "critical",
-    column: "in_progress",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 0,
-  },
-  {
-    id: "t-2",
-    code: "RN-102",
-    title: "Otimizar consultas Drizzle & índices do banco",
-    description: "Adicionar índices parciais nas queries mais lentas.",
-    category: "work",
-    priority: "medium",
-    column: "done",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 0,
-  },
-  {
-    id: "t-3",
-    code: "RN-103",
-    title: "Estudo: Deep dive em Causal Inference & Estatística",
-    description: "Ler capítulo 4 sobre Do-calculus e DAGs causais.",
-    category: "study",
-    priority: "medium",
-    column: "todo",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 0,
-  },
-  {
-    id: "t-4",
-    code: "RN-104",
-    title: "Treino de Força & Mobilidade (1h)",
-    description: "Foco em membros superiores e liberação miofascial.",
-    category: "health",
-    priority: "low",
-    column: "todo",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 1,
-  },
-  {
-    id: "t-5",
-    code: "RN-105",
-    title: "Ajustar alocação de aportes do mês",
-    description: "Transferir reserva estratégica e rebalancear carteira.",
-    category: "finance",
-    priority: "critical",
-    column: "blocked",
-    dueDate: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    order: 0,
-  },
-];
+export const DEMO_TASK_IDS = new Set(["t-1", "t-2", "t-3", "t-4", "t-5"]);
+
+// Novos usuários iniciam zerados de tarefas
+export const INITIAL_TASKS: PlannerTask[] = [];
 
 export interface CloudSyncResult {
   success: boolean;
@@ -111,7 +53,7 @@ export class PlannerService {
         if (colsError.code === "PGRST205" || colsError.message?.includes("schema cache")) {
           return {
             columns: DEFAULT_COLUMNS,
-            tasks: INITIAL_TASKS,
+            tasks: [],
             tableMissing: true,
             error: "Tabelas do Supabase não encontradas. Execute o arquivo supabase/schema.sql.",
           };
@@ -130,10 +72,10 @@ export class PlannerService {
         throw tasksError;
       }
 
-      // Se usuário não tiver colunas cadastradas no banco, cria o layout inicial
+      // Se usuário não tiver colunas cadastradas no banco, cria o layout inicial com zero cards
       if (!colsData || colsData.length === 0) {
         const colsToSeed = initialCols && initialCols.length > 0 ? initialCols : DEFAULT_COLUMNS;
-        const tasksToSeed = initialTasks !== undefined ? initialTasks : INITIAL_TASKS;
+        const tasksToSeed: PlannerTask[] = [];
         await this.initializeUserBoard(userId, colsToSeed, tasksToSeed);
         return {
           columns: colsToSeed,
@@ -194,8 +136,11 @@ export class PlannerService {
       }));
 
       // Detectar se há tarefas locais (ex: recém criadas em um workspace) que ainda não foram para o Supabase
+      // Ignora tarefas mock/demo legadas (t-1 a t-5) para manter contas novas zeradas
       const existingTaskIds = new Set(formattedTasks.map((t) => t.id));
-      const extraTasks = (initialTasks || []).filter((t) => !existingTaskIds.has(t.id));
+      const extraTasks = (initialTasks || []).filter(
+        (t) => !existingTaskIds.has(t.id) && !DEMO_TASK_IDS.has(t.id)
+      );
 
       let allTasks = formattedTasks;
       if (extraTasks.length > 0) {
@@ -239,7 +184,7 @@ export class PlannerService {
       console.error("[PlannerService.fetchUserBoard] Falha:", err);
       return {
         columns: DEFAULT_COLUMNS,
-        tasks: INITIAL_TASKS,
+        tasks: [],
         error: (err as Error)?.message || "Erro desconhecido ao buscar dados da nuvem.",
       };
     }
