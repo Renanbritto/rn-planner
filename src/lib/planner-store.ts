@@ -7,6 +7,8 @@ import {
   ColumnColor,
   Priority,
   TaskCategory,
+  Workspace,
+  DEFAULT_WORKSPACE,
 } from "@/types/planner";
 import { useAuth } from "./auth-context";
 import {
@@ -34,24 +36,60 @@ function sanitizeDescription(str: string, maxLength = 2000000): string {
     .slice(0, maxLength);
 }
 
+function getStoredLocalWorkspaces(): Workspace[] {
+  if (typeof window === "undefined") return [DEFAULT_WORKSPACE];
+  try {
+    const stored = localStorage.getItem("rn_planner_workspaces");
+    if (stored) {
+      const parsed: Workspace[] = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn("Erro ao carregar workspaces do LocalStorage", e);
+  }
+  return [DEFAULT_WORKSPACE];
+}
+
+function getStoredActiveWorkspaceId(): string {
+  if (typeof window === "undefined") return DEFAULT_WORKSPACE.id;
+  try {
+    const stored = localStorage.getItem("rn_planner_active_workspace_id");
+    if (stored) return stored;
+  } catch (e) {
+    console.warn("Erro ao carregar workspace ativo", e);
+  }
+  return DEFAULT_WORKSPACE.id;
+}
+
 function getStoredLocalColumns(): KanbanColumnDef[] {
-  if (typeof window === "undefined") return DEFAULT_COLUMNS;
+  if (typeof window === "undefined") {
+    return DEFAULT_COLUMNS.map((c) => ({ ...c, workspaceId: DEFAULT_WORKSPACE.id }));
+  }
   try {
     const storedCols = localStorage.getItem("rn_planner_board_columns");
     if (storedCols) {
       const parsedCols: KanbanColumnDef[] = JSON.parse(storedCols);
       if (Array.isArray(parsedCols) && parsedCols.length > 0) {
-        return parsedCols.sort((a, b) => a.order - b.order);
+        return parsedCols
+          .map((c) => ({
+            ...c,
+            workspaceId: c.workspaceId || DEFAULT_WORKSPACE.id,
+          }))
+          .sort((a, b) => a.order - b.order);
       }
     }
   } catch (e) {
     console.warn("Erro ao carregar colunas do LocalStorage", e);
   }
-  return DEFAULT_COLUMNS;
+  return DEFAULT_COLUMNS.map((c) => ({ ...c, workspaceId: DEFAULT_WORKSPACE.id }));
 }
 
 function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
-  if (typeof window === "undefined") return INITIAL_TASKS;
+  if (typeof window === "undefined") {
+    return INITIAL_TASKS.map((t) => ({ ...t, workspaceId: DEFAULT_WORKSPACE.id }));
+  }
   try {
     const storedTasks = localStorage.getItem("rn_planner_board_tasks");
     if (storedTasks) {
@@ -61,6 +99,7 @@ function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
         const firstColId = validColumns[0]?.id || "todo";
         return parsedTasks.map((t) => ({
           ...t,
+          workspaceId: t.workspaceId || DEFAULT_WORKSPACE.id,
           column: validColIds.has(t.column) ? t.column : firstColId,
         }));
       }
@@ -68,12 +107,14 @@ function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
   } catch (e) {
     console.warn("Erro ao carregar tarefas do LocalStorage", e);
   }
-  return INITIAL_TASKS;
+  return INITIAL_TASKS.map((t) => ({ ...t, workspaceId: DEFAULT_WORKSPACE.id }));
 }
 
 export function usePlanner() {
   const { user, loading: authLoading } = useAuth();
 
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(getStoredLocalWorkspaces);
+  const [activeWorkspaceId, setActiveWorkspaceIdState] = useState<string>(getStoredActiveWorkspaceId);
   const [columns, setColumns] = useState<KanbanColumnDef[]>(DEFAULT_COLUMNS);
   const [tasks, setTasks] = useState<PlannerTask[]>(INITIAL_TASKS);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -84,6 +125,46 @@ export function usePlanner() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+
+  // Workspace ativo
+  const activeWorkspace =
+    workspaces.find((w) => w.id === activeWorkspaceId) ||
+    workspaces[0] ||
+    DEFAULT_WORKSPACE;
+
+  const setActiveWorkspaceId = useCallback((id: string) => {
+    setActiveWorkspaceIdState(id);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("rn_planner_active_workspace_id", id);
+    }
+  }, []);
+
+  // Colunas do Workspace Ativo
+  const activeWorkspaceColumns = columns
+    .filter((col) => (col.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId)
+    .sort((a, b) => a.order - b.order);
+
+  // Inicializa colunas padrão para o workspace se não houver nenhuma
+  useEffect(() => {
+    if (!isLoaded) return;
+    const hasCols = columns.some(
+      (c) => (c.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId
+    );
+    if (!hasCols) {
+      const generatedCols: KanbanColumnDef[] = DEFAULT_COLUMNS.map((col, idx) => ({
+        ...col,
+        id: `col-${activeWorkspaceId}-${col.id}`,
+        workspaceId: activeWorkspaceId,
+        order: idx,
+      }));
+      setColumns((prev) => [...prev, ...generatedCols]);
+    }
+  }, [activeWorkspaceId, isLoaded, columns]);
+
+  // Tarefas do Workspace Ativo
+  const activeWorkspaceTasks = tasks.filter(
+    (t) => (t.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId
+  );
 
   const activeUserIdRef = useRef<string | null>(null);
 
@@ -155,18 +236,92 @@ export function usePlanner() {
   useEffect(() => {
     if (!isLoaded) return;
     try {
+      localStorage.setItem("rn_planner_workspaces", JSON.stringify(workspaces));
+      localStorage.setItem("rn_planner_active_workspace_id", activeWorkspaceId);
       localStorage.setItem("rn_planner_board_columns", JSON.stringify(columns));
       localStorage.setItem("rn_planner_board_tasks", JSON.stringify(tasks));
     } catch (e) {
       console.warn("Erro ao salvar cache local", e);
     }
-  }, [columns, tasks, isLoaded]);
+  }, [workspaces, activeWorkspaceId, columns, tasks, isLoaded]);
+
+  // -------------------------------------------------------------
+  // MÉTODOS DE WORKSPACE
+  // -------------------------------------------------------------
+
+  const addWorkspace = async (data: {
+    name: string;
+    icon?: string;
+    avatarUrl?: string;
+    color?: ColumnColor;
+  }) => {
+    const cleanName = sanitizeString(data.name, 40);
+    if (!cleanName) return null;
+
+    const newWsId = `ws-${Date.now().toString(36)}`;
+    const newWs: Workspace = {
+      id: newWsId,
+      name: cleanName,
+      icon: data.icon || "🚀",
+      avatarUrl: data.avatarUrl,
+      color: data.color || "cyan",
+      createdAt: new Date().toISOString(),
+    };
+
+    const newWsCols: KanbanColumnDef[] = DEFAULT_COLUMNS.map((col, idx) => ({
+      ...col,
+      id: `col-${newWsId}-${col.id}`,
+      workspaceId: newWsId,
+      order: idx,
+    }));
+
+    setWorkspaces((prev) => [...prev, newWs]);
+    setColumns((prev) => [...prev, ...newWsCols]);
+    setActiveWorkspaceId(newWsId);
+
+    toast.success(`Workspace "${cleanName}" criado!`);
+    return newWs;
+  };
+
+  const updateWorkspace = async (id: string, updates: Partial<Workspace>) => {
+    setWorkspaces((prev) =>
+      prev.map((w) => {
+        if (w.id !== id) return w;
+        return {
+          ...w,
+          ...updates,
+          name: updates.name ? sanitizeString(updates.name, 40) : w.name,
+        };
+      })
+    );
+    toast.success("Workspace atualizado!");
+  };
+
+  const deleteWorkspace = async (id: string) => {
+    if (workspaces.length <= 1) {
+      toast.error("Você precisa manter pelo menos um workspace.");
+      return;
+    }
+
+    const wsToDelete = workspaces.find((w) => w.id === id);
+    const remaining = workspaces.filter((w) => w.id !== id);
+    setWorkspaces(remaining);
+
+    setColumns((prev) => prev.filter((c) => (c.workspaceId || DEFAULT_WORKSPACE.id) !== id));
+    setTasks((prev) => prev.filter((t) => (t.workspaceId || DEFAULT_WORKSPACE.id) !== id));
+
+    if (activeWorkspaceId === id) {
+      setActiveWorkspaceId(remaining[0].id);
+    }
+
+    toast.success(`Workspace "${wsToDelete?.name || ""}" removido.`);
+  };
 
   // -------------------------------------------------------------
   // MÉTODOS DE COLUNAS / ETAPAS
   // -------------------------------------------------------------
 
-  // Adicionar nova etapa
+  // Adicionar nova etapa no workspace ativo
   const addColumn = async (title: string, color: ColumnColor = "cyan") => {
     const cleanTitle = sanitizeString(title, 40);
     if (!cleanTitle) return null;
@@ -176,7 +331,8 @@ export function usePlanner() {
       id: newId,
       title: cleanTitle,
       color,
-      order: columns.length,
+      order: activeWorkspaceColumns.length,
+      workspaceId: activeWorkspaceId,
     };
 
     // Atualização otimista imediata na UI
@@ -233,12 +389,12 @@ export function usePlanner() {
     }
   };
 
-  // Excluir etapa com proteção de integridade
+  // Excluir etapa com proteção de integridade no workspace ativo
   const deleteColumn = async (
     columnId: string,
     options?: { moveTasksToColumnId?: string }
   ) => {
-    if (columns.length <= 1) {
+    if (activeWorkspaceColumns.length <= 1) {
       return { success: false, message: "O quadro precisa ter pelo menos uma etapa." };
     }
 
@@ -246,18 +402,32 @@ export function usePlanner() {
     if (options?.moveTasksToColumnId) {
       const targetColId = options.moveTasksToColumnId;
       setTasks((prev) =>
-        prev.map((t) => (t.column === columnId ? { ...t, column: targetColId } : t))
+        prev.map((t) =>
+          t.column === columnId && (t.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId
+            ? { ...t, column: targetColId }
+            : t
+        )
       );
     } else {
-      setTasks((prev) => prev.filter((t) => t.column !== columnId));
+      setTasks((prev) =>
+        prev.filter(
+          (t) =>
+            !(t.column === columnId && (t.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId)
+        )
+      );
     }
 
-    // 2. Remover a coluna e reordenar as remanescentes
-    const updatedCols = columns
-      .filter((c) => c.id !== columnId)
-      .map((c, idx) => ({ ...c, order: idx }));
-
-    setColumns(updatedCols);
+    // 2. Remover a coluna e reordenar apenas as remanescentes do workspace ativo
+    setColumns((prev) => {
+      const filtered = prev.filter((c) => c.id !== columnId);
+      let orderCounter = 0;
+      return filtered.map((c) => {
+        if ((c.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId) {
+          return { ...c, order: orderCounter++ };
+        }
+        return c;
+      });
+    });
 
     // 3. Persistência na nuvem
     if (user && syncStatus !== "needs_schema") {
@@ -280,34 +450,59 @@ export function usePlanner() {
     return { success: true };
   };
 
-  // Mover etapa para a esquerda ou direita
+  // Mover etapa para a esquerda ou direita dentro do workspace ativo
   const moveColumn = async (columnId: string, direction: "left" | "right") => {
-    const idx = columns.findIndex((c) => c.id === columnId);
+    const wsCols = [...activeWorkspaceColumns];
+    const idx = wsCols.findIndex((c) => c.id === columnId);
     if (idx === -1) return;
     if (direction === "left" && idx === 0) return;
-    if (direction === "right" && idx === columns.length - 1) return;
+    if (direction === "right" && idx === wsCols.length - 1) return;
 
-    const newCols = [...columns];
     const targetIdx = direction === "left" ? idx - 1 : idx + 1;
-    const [removed] = newCols.splice(idx, 1);
-    newCols.splice(targetIdx, 0, removed);
+    const [removed] = wsCols.splice(idx, 1);
+    wsCols.splice(targetIdx, 0, removed);
 
-    const reordered = newCols.map((col, i) => ({ ...col, order: i }));
-    setColumns(reordered);
+    const reorderedMap = new Map<string, number>();
+    wsCols.forEach((col, i) => reorderedMap.set(col.id, i));
+
+    setColumns((prev) =>
+      prev.map((col) => {
+        if (reorderedMap.has(col.id)) {
+          return { ...col, order: reorderedMap.get(col.id)! };
+        }
+        return col;
+      })
+    );
 
     if (user && syncStatus !== "needs_schema") {
       setSyncStatus("syncing");
-      for (const col of reordered) {
-        await PlannerService.upsertColumn(user.id, col);
+      for (const [colId, order] of reorderedMap.entries()) {
+        const target = wsCols.find((c) => c.id === colId);
+        if (target) {
+          await PlannerService.upsertColumn(user.id, { ...target, order });
+        }
       }
       setSyncStatus("synced");
     }
   };
 
-  // Limpar todas as tarefas de uma etapa específica
+  // Limpar todas as tarefas de uma etapa específica no workspace ativo
   const clearColumnTasks = async (columnId: string) => {
-    const tasksToRemove = tasks.filter((t) => t.column === columnId);
-    setTasks((prev) => prev.filter((t) => t.column !== columnId));
+    const tasksToRemove = tasks.filter(
+      (t) =>
+        t.column === columnId &&
+        (t.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId
+    );
+
+    setTasks((prev) =>
+      prev.filter(
+        (t) =>
+          !(
+            t.column === columnId &&
+            (t.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId
+          )
+      )
+    );
 
     if (user && syncStatus !== "needs_schema") {
       setSyncStatus("syncing");
@@ -319,19 +514,30 @@ export function usePlanner() {
     toast.success("Etapa esvaziada");
   };
 
-  // Resetar colunas para o padrão de fábrica
+  // Resetar colunas para o padrão de fábrica no workspace ativo
   const resetToDefaultColumns = async () => {
-    setColumns(DEFAULT_COLUMNS);
-    const validIds = new Set(DEFAULT_COLUMNS.map((c) => c.id));
+    const newWsCols: KanbanColumnDef[] = DEFAULT_COLUMNS.map((col, idx) => ({
+      ...col,
+      id: `col-${activeWorkspaceId}-${col.id}`,
+      workspaceId: activeWorkspaceId,
+      order: idx,
+    }));
+
+    setColumns((prev) => [
+      ...prev.filter((c) => (c.workspaceId || DEFAULT_WORKSPACE.id) !== activeWorkspaceId),
+      ...newWsCols,
+    ]);
+
+    const firstColId = newWsCols[0]?.id || "todo";
     setTasks((prev) =>
-      prev.map((t) => (validIds.has(t.column) ? t : { ...t, column: "todo" }))
+      prev.map((t) =>
+        (t.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId
+          ? { ...t, column: firstColId }
+          : t
+      )
     );
 
-    if (user && syncStatus !== "needs_schema") {
-      setSyncStatus("syncing");
-      await PlannerService.initializeUserBoard(user.id, DEFAULT_COLUMNS, tasks);
-      setSyncStatus("synced");
-    }
+    toast.success("Colunas restauradas para o padrão");
   };
 
   // -------------------------------------------------------------
@@ -380,7 +586,7 @@ export function usePlanner() {
     }
   };
 
-  // Adicionar nova tarefa
+  // Adicionar nova tarefa no workspace ativo
   const addTask = async (data: {
     title: string;
     description?: string;
@@ -392,12 +598,13 @@ export function usePlanner() {
     const nextNumber = tasks.length + 101;
     const newTask: PlannerTask = {
       ...data,
+      workspaceId: activeWorkspaceId,
       title: sanitizeString(data.title, 120),
       description: data.description ? sanitizeDescription(data.description) : undefined,
       id: "t-" + Date.now(),
       code: `RN-${nextNumber}`,
       createdAt: new Date().toISOString(),
-      order: tasks.filter((t) => t.column === data.column).length,
+      order: activeWorkspaceTasks.filter((t) => t.column === data.column).length,
     };
 
     // Otimista
@@ -497,8 +704,8 @@ export function usePlanner() {
     }
   };
 
-  // Tarefas filtradas por busca e tags
-  const filteredTasks = tasks.filter((task) => {
+  // Tarefas filtradas por busca e tags DENTRO DO WORKSPACE ATIVO
+  const filteredTasks = activeWorkspaceTasks.filter((task) => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
@@ -516,9 +723,20 @@ export function usePlanner() {
   });
 
   return {
-    columns,
+    // Workspace state & operations
+    workspaces,
+    activeWorkspace,
+    activeWorkspaceId,
+    setActiveWorkspaceId,
+    addWorkspace,
+    updateWorkspace,
+    deleteWorkspace,
+    // Columns & Tasks scoped to active workspace
+    columns: activeWorkspaceColumns,
     tasks: filteredTasks,
-    allTasks: tasks,
+    allTasks: activeWorkspaceTasks,
+    allWorkspacesTasks: tasks,
+    allWorkspacesColumns: columns,
     isLoaded,
     syncStatus,
     syncErrorMessage,

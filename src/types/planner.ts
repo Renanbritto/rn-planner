@@ -9,11 +9,63 @@ export type ColumnColor =
   | "blue"
   | "teal";
 
+export interface Workspace {
+  id: string; // e.g. "ws-default", "ws-172987123"
+  name: string;
+  icon?: string;
+  avatarUrl?: string;
+  color: ColumnColor;
+  createdAt?: string;
+}
+
+export const DEFAULT_WORKSPACE: Workspace = {
+  id: "ws-default",
+  name: "Workspace Principal",
+  icon: "⚡",
+  color: "cyan",
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
+export const WORKSPACE_ICONS = [
+  "⚡", "🚀", "💼", "🧠", "🎯", "🔬", "📊", "🔥", "💻", "✨", 
+  "🛠️", "📚", "🎨", "📈", "⭐", "🏆", "💡", "🌐", "🔮", "💎",
+  "🤖", "📐", "📝", "☕", "🌱"
+];
+
+export const WORKSPACE_LUCIDE_ICONS = [
+  "Rocket",
+  "Briefcase",
+  "Code2",
+  "Brain",
+  "Target",
+  "Sparkles",
+  "Flame",
+  "Laptop",
+  "Layers",
+  "Database",
+  "FolderKanban",
+  "BookOpen",
+  "Palette",
+  "TrendingUp",
+  "Compass",
+  "Terminal",
+  "Cpu",
+  "Wrench",
+  "Globe",
+  "Zap",
+  "Shield",
+  "Heart",
+  "Activity",
+  "Building2",
+  "Coffee",
+] as const;
+
 export interface KanbanColumnDef {
   id: string; // unique id e.g. "todo", "in_progress", "col-12345"
   title: string;
   color: ColumnColor;
   order: number;
+  workspaceId?: string;
 }
 
 export type Priority = "critical" | "medium" | "low";
@@ -30,6 +82,7 @@ export interface PlannerTask {
   dueDate: string; // YYYY-MM-DD
   createdAt: string;
   order: number;
+  workspaceId?: string;
 }
 
 export type KanbanColumn = string;

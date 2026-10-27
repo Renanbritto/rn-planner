@@ -10,6 +10,7 @@ import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { WhiteboardWrapper } from "@/components/whiteboard/whiteboard-wrapper";
 import { NewCardDialog } from "@/components/kanban/new-card-dialog";
 import { NewColumnDialog } from "@/components/kanban/new-column-dialog";
+import { NewWorkspaceDialog } from "@/components/workspace/new-workspace-dialog";
 import { Code2 } from "lucide-react";
 
 export default function PlannerPage() {
@@ -38,6 +39,13 @@ export default function PlannerPage() {
 
   const { user, loading: authLoading, isGuestMode } = useAuth();
   const {
+    // Workspace state
+    workspaces,
+    activeWorkspace,
+    activeWorkspaceId,
+    setActiveWorkspaceId,
+    addWorkspace,
+    // Column & Task state
     columns,
     tasks,
     allTasks,
@@ -66,6 +74,7 @@ export default function PlannerPage() {
 
   const [isCardDialogOpen, setIsCardDialogOpen] = useState(false);
   const [isColumnDialogOpen, setIsColumnDialogOpen] = useState(false);
+  const [isNewWorkspaceDialogOpen, setIsNewWorkspaceDialogOpen] = useState(false);
   const [selectedColumn, setSelectedColumn] = useState<string>("todo");
 
   const handleQuickAdd = (columnId: string) => {
@@ -120,7 +129,7 @@ export default function PlannerPage() {
         <div className="absolute -bottom-40 left-1/3 h-[500px] w-[500px] rounded-full bg-[#10b981]/5 dark:bg-[#10b981]/5 blur-[150px]" />
       </div>
 
-      {/* Menu Retrátil Lateral (Sidebar estilo Linear/Notion com Card e Excalidraw) */}
+      {/* Menu Retrátil Lateral (Sidebar estilo Linear/Notion com Seletor de Workspace, Card e Excalidraw) */}
       <AppSidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -129,6 +138,10 @@ export default function PlannerPage() {
         setIsCollapsed={handleSetSidebarCollapsed}
         isMobileOpen={isMobileSidebarOpen}
         setIsMobileOpen={setIsMobileSidebarOpen}
+        workspaces={workspaces}
+        activeWorkspace={activeWorkspace}
+        onSelectWorkspace={setActiveWorkspaceId}
+        onOpenNewWorkspace={() => setIsNewWorkspaceDialogOpen(true)}
       />
 
       {/* Área Principal de Conteúdo */}
@@ -172,7 +185,7 @@ export default function PlannerPage() {
             </div>
           ) : (
             <div className="flex-1 w-full animate-in fade-in duration-200">
-              <WhiteboardWrapper />
+              <WhiteboardWrapper key={activeWorkspace.id} workspaceId={activeWorkspace.id} />
             </div>
           )}
 
@@ -180,7 +193,9 @@ export default function PlannerPage() {
           <footer className="mt-auto flex flex-col items-center justify-between gap-4 border-t border-slate-200 dark:border-white/10 pt-4 text-xs text-slate-500 dark:text-slate-400 sm:flex-row">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
-              <span className="font-comfortaa font-medium text-slate-700 dark:text-slate-300">RN Planner • Personal Workspace</span>
+              <span className="font-comfortaa font-medium text-slate-700 dark:text-slate-300">
+                RN Planner • {activeWorkspace.name}
+              </span>
             </div>
 
             <div className="flex items-center gap-4">
@@ -212,6 +227,13 @@ export default function PlannerPage() {
         open={isColumnDialogOpen}
         onOpenChange={setIsColumnDialogOpen}
         onAddColumn={addColumn}
+      />
+
+      {/* Modal Novo Workspace */}
+      <NewWorkspaceDialog
+        open={isNewWorkspaceDialogOpen}
+        onOpenChange={setIsNewWorkspaceDialogOpen}
+        onCreateWorkspace={addWorkspace}
       />
     </div>
   );

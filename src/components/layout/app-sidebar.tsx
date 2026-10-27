@@ -8,8 +8,26 @@ import {
   PanelLeftOpen,
   X,
   Sparkles,
+  ChevronsUpDown,
+  Plus,
+  Check,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import {
+  Workspace,
+  DEFAULT_WORKSPACE,
+  getColumnColorConfig,
+} from "@/types/planner";
+import { WorkspaceAvatar } from "@/components/workspace/workspace-avatar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface AppSidebarProps {
   activeTab: "kanban" | "whiteboard";
@@ -19,6 +37,10 @@ interface AppSidebarProps {
   setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   isMobileOpen: boolean;
   setIsMobileOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  workspaces?: Workspace[];
+  activeWorkspace?: Workspace;
+  onSelectWorkspace?: (workspaceId: string) => void;
+  onOpenNewWorkspace?: () => void;
 }
 
 export function AppSidebar({
@@ -29,7 +51,14 @@ export function AppSidebar({
   setIsCollapsed,
   isMobileOpen,
   setIsMobileOpen,
+  workspaces = [DEFAULT_WORKSPACE],
+  activeWorkspace = DEFAULT_WORKSPACE,
+  onSelectWorkspace,
+  onOpenNewWorkspace,
 }: AppSidebarProps) {
+  const currentWorkspace = activeWorkspace || DEFAULT_WORKSPACE;
+  const currentWsColor = getColumnColorConfig(currentWorkspace.color);
+
   const navItems = [
     {
       id: "kanban" as const,
@@ -72,7 +101,7 @@ export function AppSidebar({
         } ${isCollapsed ? "md:w-[72px]" : "md:w-64"}`}
       >
         {/* Topo da Sidebar: Logo & Botão de Recolher */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-slate-200 dark:border-white/10">
+        <div className="flex h-16 items-center justify-between px-4 border-b border-slate-200 dark:border-white/10 shrink-0">
           <div className="flex items-center gap-3 overflow-hidden">
             {isCollapsed ? (
               <BrandLogo size={32} showText={false} />
@@ -104,6 +133,107 @@ export function AppSidebar({
               <PanelLeftClose className="h-4 w-4" />
             )}
           </button>
+        </div>
+
+        {/* Seletor de Workspace */}
+        <div className="p-2 border-b border-slate-200 dark:border-white/10 shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={`group flex items-center rounded-2xl transition-all duration-200 cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-cyan-500/50 ${
+                isCollapsed
+                  ? "h-11 w-full justify-center px-0 hover:bg-slate-100 dark:hover:bg-white/[0.05]"
+                  : "h-12 w-full justify-between px-2.5 py-1.5 border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:border-slate-300 dark:hover:border-white/20 shadow-xs"
+              }`}
+              title={isCollapsed ? `Workspace: ${currentWorkspace.name}` : undefined}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                {/* Emoji / Ícone / Imagem com estilo do Workspace */}
+                <WorkspaceAvatar
+                  icon={currentWorkspace.icon}
+                  avatarUrl={currentWorkspace.avatarUrl}
+                  color={currentWorkspace.color}
+                  size="md"
+                  name={currentWorkspace.name}
+                  className="transition-transform duration-200 group-hover:scale-105"
+                />
+
+                {!isCollapsed && (
+                  <div className="flex flex-col text-left min-w-0">
+                    <span className="font-comfortaa text-xs font-bold text-slate-900 dark:text-white truncate">
+                      {currentWorkspace.name}
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono tracking-tight flex items-center gap-1.5">
+                      <span className={`inline-block h-1.5 w-1.5 rounded-full ${currentWsColor.dotColor}`} />
+                      Espaço Ativo
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {!isCollapsed && (
+                <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors ml-1" />
+              )}
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align={isCollapsed ? "start" : "center"}
+              side={isCollapsed ? "right" : "bottom"}
+              sideOffset={6}
+              className="w-60 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-1.5 text-slate-800 dark:text-slate-200 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100"
+            >
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="px-2.5 py-1 text-[10px] font-mono uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
+                  Seus Workspaces
+                </DropdownMenuLabel>
+
+              <div className="flex flex-col gap-0.5 my-1 max-h-56 overflow-y-auto">
+                {workspaces.map((ws) => {
+                  const isCurrent = ws.id === currentWorkspace.id;
+                  const itemColor = getColumnColorConfig(ws.color);
+
+                  return (
+                    <DropdownMenuItem
+                      key={ws.id}
+                      onClick={() => onSelectWorkspace?.(ws.id)}
+                      className={`flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl text-xs font-comfortaa cursor-pointer transition-colors ${
+                        isCurrent
+                          ? "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-bold border border-cyan-500/20"
+                          : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <WorkspaceAvatar
+                          icon={ws.icon}
+                          avatarUrl={ws.avatarUrl}
+                          color={ws.color}
+                          size="sm"
+                          name={ws.name}
+                        />
+                        <span className="truncate">{ws.name}</span>
+                      </div>
+
+                      {isCurrent && (
+                        <Check className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </div>
+
+              <DropdownMenuSeparator className="bg-slate-200 dark:bg-white/10 my-1" />
+
+              <DropdownMenuItem
+                onClick={() => onOpenNewWorkspace?.()}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-comfortaa font-bold text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 cursor-pointer transition-colors"
+              >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30">
+                  <Plus className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <span>Novo Workspace</span>
+              </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Itens de Navegação (Card e Excalidraw) */}
@@ -192,10 +322,10 @@ export function AppSidebar({
         <div className="p-3 border-t border-slate-200 dark:border-white/10">
           {!isCollapsed ? (
             <div className="flex items-center justify-between px-2 py-1.5 text-xs text-slate-500 dark:text-slate-400">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-pulse shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
-                <span className="font-comfortaa text-[11px] font-medium text-slate-600 dark:text-slate-400">
-                  Workspace Ativo
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-pulse shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
+                <span className="font-comfortaa text-[11px] font-medium text-slate-600 dark:text-slate-400 truncate max-w-[130px]">
+                  {currentWorkspace.name}
                 </span>
               </div>
               <Sparkles className="h-3.5 w-3.5 text-cyan-500/60 dark:text-cyan-400/60" />

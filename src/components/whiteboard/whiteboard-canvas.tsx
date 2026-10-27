@@ -10,7 +10,11 @@ import { Sparkles, Trash2, Download, Maximize2, Minimize2 } from "lucide-react";
 const STORAGE_KEY = "rn_planner_whiteboard_elements_v1";
 const APP_STATE_STORAGE_KEY = "rn_planner_whiteboard_appstate_v1";
 
-export function WhiteboardCanvas() {
+interface WhiteboardCanvasProps {
+  workspaceId?: string;
+}
+
+export function WhiteboardCanvas({ workspaceId }: WhiteboardCanvasProps) {
   const { resolvedTheme } = useTheme();
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
   const [initialData, setInitialData] = useState<{
@@ -21,13 +25,26 @@ export function WhiteboardCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const storageKey = workspaceId
+    ? `rn_planner_whiteboard_elements_${workspaceId}`
+    : STORAGE_KEY;
+  const appStateKey = workspaceId
+    ? `rn_planner_whiteboard_appstate_${workspaceId}`
+    : APP_STATE_STORAGE_KEY;
+
   // Carrega dados salvos no localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     try {
-      const savedElements = localStorage.getItem(STORAGE_KEY);
-      const savedAppState = localStorage.getItem(APP_STATE_STORAGE_KEY);
+      let savedElements = localStorage.getItem(storageKey);
+      let savedAppState = localStorage.getItem(appStateKey);
+
+      // Fallback para chave antiga se for o workspace principal
+      if (!savedElements && (!workspaceId || workspaceId === "ws-default")) {
+        savedElements = localStorage.getItem(STORAGE_KEY);
+        savedAppState = localStorage.getItem(APP_STATE_STORAGE_KEY);
+      }
 
       const parsedElements = savedElements ? JSON.parse(savedElements) : [];
       const parsedAppState = savedAppState ? JSON.parse(savedAppState) : {};
@@ -43,7 +60,7 @@ export function WhiteboardCanvas() {
       console.warn("Erro ao carregar dados do Whiteboard:", e);
       setInitialData({ elements: [] });
     }
-  }, [resolvedTheme]);
+  }, [resolvedTheme, storageKey, appStateKey, workspaceId]);
 
   // Atualiza tema do Excalidraw dinamicamente quando o usuário alternar modo claro/escuro
   useEffect(() => {
@@ -64,7 +81,7 @@ export function WhiteboardCanvas() {
 
     saveTimeoutRef.current = setTimeout(() => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(elements));
+        localStorage.setItem(storageKey, JSON.stringify(elements));
         // Salva apenas configurações relevantes do appState (zoom, scroll, etc.)
         const stateToSave = {
           zoom: appState.zoom,
@@ -73,19 +90,19 @@ export function WhiteboardCanvas() {
           gridSize: appState.gridSize,
           viewBackgroundColor: appState.viewBackgroundColor,
         };
-        localStorage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify(stateToSave));
+        localStorage.setItem(appStateKey, JSON.stringify(stateToSave));
       } catch (err) {
         console.warn("Falha ao salvar rascunho do Whiteboard:", err);
       }
     }, 400);
-  }, []);
+  }, [storageKey, appStateKey]);
 
   const handleClearCanvas = () => {
     if (!excalidrawAPI) return;
     if (window.confirm("Deseja realmente limpar todos os desenhos e formas do quadro?")) {
       excalidrawAPI.resetScene();
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(APP_STATE_STORAGE_KEY);
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem(appStateKey);
     }
   };
 

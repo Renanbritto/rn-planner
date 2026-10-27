@@ -22,6 +22,10 @@ const WhiteboardCanvas = dynamic(
   }
 );
 
-export function WhiteboardWrapper() {
-  return <WhiteboardCanvas />;
+interface WhiteboardWrapperProps {
+  workspaceId?: string;
+}
+
+export function WhiteboardWrapper({ workspaceId }: WhiteboardWrapperProps) {
+  return <WhiteboardCanvas workspaceId={workspaceId} />;
 }
