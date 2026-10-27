@@ -396,11 +396,15 @@ export function usePlanner() {
     setWorkspaces((prev) =>
       prev.map((w) => {
         if (w.id !== id) return w;
-        return {
+        const next: Workspace = {
           ...w,
           ...updates,
           name: updates.name ? sanitizeString(updates.name, 40) : w.name,
         };
+        if ("avatarUrl" in updates) {
+          next.avatarUrl = updates.avatarUrl;
+        }
+        return next;
       })
     );
     toast.success("Workspace atualizado!");

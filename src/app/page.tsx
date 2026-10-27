@@ -11,7 +11,9 @@ import { WhiteboardWrapper } from "@/components/whiteboard/whiteboard-wrapper";
 import { NewCardDialog } from "@/components/kanban/new-card-dialog";
 import { NewColumnDialog } from "@/components/kanban/new-column-dialog";
 import { NewWorkspaceDialog } from "@/components/workspace/new-workspace-dialog";
-import { Code2 } from "lucide-react";
+import { EditWorkspaceDialog } from "@/components/workspace/edit-workspace-dialog";
+import { Workspace } from "@/types/planner";
+import { Code2, Sliders } from "lucide-react";
 
 export default function PlannerPage() {
   const [activeTab, setActiveTab] = useState<"kanban" | "whiteboard">("kanban");
@@ -43,6 +45,8 @@ export default function PlannerPage() {
     activeWorkspace,
     setActiveWorkspaceId,
     addWorkspace,
+    updateWorkspace,
+    deleteWorkspace,
     // Column & Task state
     columns,
     tasks,
@@ -74,6 +78,7 @@ export default function PlannerPage() {
   const [isCardDialogOpen, setIsCardDialogOpen] = useState(false);
   const [isColumnDialogOpen, setIsColumnDialogOpen] = useState(false);
   const [isNewWorkspaceDialogOpen, setIsNewWorkspaceDialogOpen] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [selectedColumn, setSelectedColumn] = useState<string>("");
 
   const handleQuickAdd = (columnId: string) => {
@@ -141,6 +146,7 @@ export default function PlannerPage() {
         activeWorkspace={activeWorkspace}
         onSelectWorkspace={setActiveWorkspaceId}
         onOpenNewWorkspace={() => setIsNewWorkspaceDialogOpen(true)}
+        onOpenEditWorkspace={(ws) => setEditingWorkspace(ws)}
       />
 
       {/* Área Principal de Conteúdo */}
@@ -193,9 +199,15 @@ export default function PlannerPage() {
           <footer className="mt-auto flex flex-col items-center justify-between gap-4 border-t border-slate-200 dark:border-white/10 pt-4 text-xs text-slate-500 dark:text-slate-400 sm:flex-row">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
-              <span className="font-comfortaa font-medium text-slate-700 dark:text-slate-300">
-                RN Planner • {activeWorkspace.name}
-              </span>
+              <button
+                type="button"
+                onClick={() => setEditingWorkspace(activeWorkspace)}
+                className="font-comfortaa font-medium text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors cursor-pointer flex items-center gap-1.5"
+                title="Editar este workspace"
+              >
+                <span>RN Planner • {activeWorkspace.name}</span>
+                <Sliders className="h-3 w-3 text-cyan-500/70" />
+              </button>
             </div>
 
             <div className="flex items-center gap-4">
@@ -234,6 +246,18 @@ export default function PlannerPage() {
         open={isNewWorkspaceDialogOpen}
         onOpenChange={setIsNewWorkspaceDialogOpen}
         onCreateWorkspace={addWorkspace}
+      />
+
+      {/* Modal Editar Workspace */}
+      <EditWorkspaceDialog
+        open={Boolean(editingWorkspace)}
+        onOpenChange={(open) => {
+          if (!open) setEditingWorkspace(null);
+        }}
+        workspace={editingWorkspace}
+        totalWorkspaces={workspaces.length}
+        onUpdateWorkspace={updateWorkspace}
+        onDeleteWorkspace={deleteWorkspace}
       />
     </div>
   );

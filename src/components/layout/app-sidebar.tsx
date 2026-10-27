@@ -11,6 +11,7 @@ import {
   ChevronsUpDown,
   Plus,
   Check,
+  Sliders,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import {
@@ -41,6 +42,7 @@ interface AppSidebarProps {
   activeWorkspace?: Workspace;
   onSelectWorkspace?: (workspaceId: string) => void;
   onOpenNewWorkspace?: () => void;
+  onOpenEditWorkspace?: (workspace: Workspace) => void;
 }
 
 export function AppSidebar({
@@ -55,6 +57,7 @@ export function AppSidebar({
   activeWorkspace = DEFAULT_WORKSPACE,
   onSelectWorkspace,
   onOpenNewWorkspace,
+  onOpenEditWorkspace,
 }: AppSidebarProps) {
   const currentWorkspace = activeWorkspace || DEFAULT_WORKSPACE;
   const currentWsColor = getColumnColorConfig(currentWorkspace.color);
@@ -195,7 +198,7 @@ export function AppSidebar({
                     <DropdownMenuItem
                       key={ws.id}
                       onClick={() => onSelectWorkspace?.(ws.id)}
-                      className={`flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl text-xs font-comfortaa cursor-pointer transition-colors ${
+                      className={`group flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl text-xs font-comfortaa cursor-pointer transition-colors ${
                         isCurrent
                           ? "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-bold border border-cyan-500/20"
                           : "text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.04]"
@@ -212,15 +215,42 @@ export function AppSidebar({
                         <span className="truncate">{ws.name}</span>
                       </div>
 
-                      {isCurrent && (
-                        <Check className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
-                      )}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {isCurrent && (
+                          <Check className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                        )}
+                        {onOpenEditWorkspace && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenEditWorkspace(ws);
+                            }}
+                            className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-slate-200/80 dark:hover:bg-white/10 transition-colors"
+                            title="Editar configurações deste workspace"
+                          >
+                            <Sliders className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
                     </DropdownMenuItem>
                   );
                 })}
               </div>
 
               <DropdownMenuSeparator className="bg-slate-200 dark:bg-white/10 my-1" />
+
+              {onOpenEditWorkspace && (
+                <DropdownMenuItem
+                  onClick={() => onOpenEditWorkspace(currentWorkspace)}
+                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-comfortaa font-medium text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-cyan-500/10 cursor-pointer transition-colors"
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10">
+                    <Sliders className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <span>Configurações do Workspace</span>
+                </DropdownMenuItem>
+              )}
 
               <DropdownMenuItem
                 onClick={() => onOpenNewWorkspace?.()}
@@ -322,13 +352,26 @@ export function AppSidebar({
         <div className="p-3 border-t border-slate-200 dark:border-white/10">
           {!isCollapsed ? (
             <div className="flex items-center justify-between px-2 py-1.5 text-xs text-slate-500 dark:text-slate-400">
-              <div className="flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                onClick={() => onOpenEditWorkspace?.(currentWorkspace)}
+                className="flex items-center gap-2 min-w-0 group cursor-pointer text-left hover:text-slate-900 dark:hover:text-white transition-colors"
+                title="Editar workspace ativo"
+              >
                 <span className="h-2 w-2 shrink-0 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-pulse shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
-                <span className="font-comfortaa text-[11px] font-medium text-slate-600 dark:text-slate-400 truncate max-w-[130px]">
+                <span className="font-comfortaa text-[11px] font-medium text-slate-600 dark:text-slate-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-300 truncate max-w-[130px] transition-colors">
                   {currentWorkspace.name}
                 </span>
-              </div>
-              <Sparkles className="h-3.5 w-3.5 text-cyan-500/60 dark:text-cyan-400/60" />
+                <Sliders className="h-3 w-3 opacity-0 group-hover:opacity-100 text-cyan-500 transition-opacity shrink-0" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpenEditWorkspace?.(currentWorkspace)}
+                className="p-1 rounded-lg text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                title="Configurações do Workspace"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-cyan-500/60 dark:text-cyan-400/60 hover:text-cyan-500" />
+              </button>
             </div>
           ) : (
             <div className="flex justify-center py-1">
