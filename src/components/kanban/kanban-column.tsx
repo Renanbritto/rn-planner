@@ -26,7 +26,9 @@ import {
   GripVertical,
   Check,
   X,
+  ArrowDown,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,9 +40,14 @@ import {
 interface KanbanColumnProps {
   column: KanbanColumnDef;
   tasks: PlannerTask[];
+  allColumns?: KanbanColumnDef[];
   isFirst: boolean;
   isLast: boolean;
   totalColumns: number;
+  activeMoveTaskId?: string | null;
+  activeMoveTask?: PlannerTask | null;
+  selectedTaskToMove?: PlannerTask | null;
+  onSelectTaskToMove?: (task: PlannerTask) => void;
   onMoveTask: (taskId: string, targetColumn: string) => void;
   onDeleteTask: (id: string) => void;
   onQuickAdd: (columnId: string) => void;
@@ -50,14 +57,21 @@ interface KanbanColumnProps {
   onClearTasks: (columnId: string) => void;
   onCardClick: (task: PlannerTask) => void;
   onUpdateColumnSort?: (columnId: string, sortBy: ColumnSortOption) => void;
+  onDragStartTask?: (taskId: string) => void;
+  onDragEndTask?: () => void;
 }
 
 export function KanbanColumn({
   column,
   tasks,
+  allColumns = [],
   isFirst,
   isLast,
   totalColumns,
+  activeMoveTaskId,
+  activeMoveTask,
+  selectedTaskToMove,
+  onSelectTaskToMove,
   onMoveTask,
   onDeleteTask,
   onQuickAdd,
@@ -67,11 +81,20 @@ export function KanbanColumn({
   onClearTasks,
   onCardClick,
   onUpdateColumnSort,
+  onDragStartTask,
+  onDragEndTask,
 }: KanbanColumnProps) {
   const [isOver, setIsOver] = useState(false);
   const colorConfig = getColumnColorConfig(column.color);
   const isSorted = Boolean(column.sortBy && column.sortBy !== "manual");
   const sortConfig = getColumnSortConfig(column.sortBy);
+
+  // Verifica se há movimentação ativa e se esta coluna é o destino (não a origem)
+  const isMoveActive = Boolean(activeMoveTaskId);
+  const isSourceColumn = Boolean(
+    activeMoveTaskId && tasks.some((t) => t.id === activeMoveTaskId)
+  );
+  const isTargetColumn = isMoveActive && !isSourceColumn;
 
   const sortedTasks = useMemo(() => {
     return sortTasks(tasks, column.sortBy || "manual");
@@ -91,9 +114,11 @@ export function KanbanColumn({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsOver(false);
-    const taskId = e.dataTransfer.getData("text/plain");
+    const taskId = e.dataTransfer.getData("text/plain") || activeMoveTaskId;
     if (taskId) {
       onMoveTask(taskId, column.id);
+      onDragEndTask?.();
+      toast.success(`Card movido para "${column.title}"!`);
     }
   };
 
@@ -102,9 +127,13 @@ export function KanbanColumn({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`flex flex-col rounded-2xl border p-4 transition-all duration-200 min-h-[580px] w-full min-w-[280px] max-w-[360px] backdrop-blur-2xl shadow-xl select-none ${
+      className={`flex flex-col rounded-2xl border p-4 transition-all duration-200 min-h-[580px] w-full min-w-[280px] max-w-[360px] backdrop-blur-2xl shadow-xl select-none relative ${
         isOver
-          ? "border-cyan-500/50 bg-cyan-500/5 dark:bg-[#0e1628]/95 shadow-2xl shadow-cyan-500/10 scale-[1.01]"
+          ? "border-cyan-400 bg-cyan-500/10 dark:bg-[#0e1c33]/95 shadow-2xl shadow-cyan-500/20 scale-[1.01]"
+          : isTargetColumn
+          ? "border-cyan-500/40 border-dashed bg-slate-50/90 dark:bg-[#0b1220]/95 shadow-lg shadow-cyan-500/5 ring-1 ring-cyan-500/20"
+          : isSourceColumn
+          ? "border-slate-300 dark:border-white/10 bg-slate-100/70 dark:bg-[#0b0f1a]/95 opacity-90"
           : "border-slate-200/90 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-100/80 dark:bg-[#0b0f1a]/95"
       }`}
     >
@@ -124,6 +153,11 @@ export function KanbanColumn({
           >
             {tasks.length}
           </span>
+          {isSourceColumn && (
+            <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-400 font-semibold px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+              origem
+            </span>
+          )}
         </div>
 
         {/* Ações da Coluna */}
@@ -344,17 +378,48 @@ export function KanbanColumn({
         </div>
       )}
 
+      {/* Botão/Área de Destino Sinalizada quando um Card está selecionado para mover */}
+      {isTargetColumn && (
+        <button
+          type="button"
+          onClick={() => {
+            if (activeMoveTaskId) {
+              onMoveTask(activeMoveTaskId, column.id);
+              onDragEndTask?.();
+              toast.success(`Card movido para "${column.title}"!`);
+            }
+          }}
+          className={`w-full flex items-center justify-center gap-2 py-2.5 px-3 mb-3 rounded-xl border-2 border-dashed transition-all cursor-pointer font-comfortaa font-bold text-xs ${
+            isOver
+              ? "border-cyan-400 bg-cyan-500/25 text-cyan-950 dark:text-cyan-100 shadow-[0_0_20px_rgba(6,182,212,0.3)] scale-[1.02] animate-pulse"
+              : "border-cyan-500/50 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-400 hover:scale-[1.01]"
+          }`}
+          title={`Clique para soltar o card em ${column.title}`}
+        >
+          <ArrowDown className={`h-4 w-4 ${isOver ? "animate-bounce text-cyan-400" : "text-cyan-500"}`} />
+          <span>
+            {isOver
+              ? `Soltar agora em "${column.title}"`
+              : `Mover card para ${column.title}`}
+          </span>
+        </button>
+      )}
+
       {/* Cards Stack */}
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-0.5">
         {sortedTasks.length === 0 ? (
           <div
             className={`flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300/80 dark:border-white/10 p-6 text-center transition-all ${
-              isOver ? "border-cyan-500/50 bg-cyan-500/10 scale-[0.98]" : "bg-white/40 dark:bg-white/[0.01]"
+              isOver
+                ? "border-cyan-500/50 bg-cyan-500/10 scale-[0.98]"
+                : "bg-white/40 dark:bg-white/[0.01]"
             }`}
           >
-            <p className="font-comfortaa text-xs text-slate-500 dark:text-slate-400 font-medium">Nenhum card nesta etapa</p>
+            <p className="font-comfortaa text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Nenhum card nesta etapa
+            </p>
             <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-mono">
-              Arraste para cá ou use o botão +
+              {isTargetColumn ? "Toque acima para mover para cá" : "Arraste para cá ou use o botão +"}
             </p>
           </div>
         ) : (
@@ -362,10 +427,20 @@ export function KanbanColumn({
             <KanbanCard
               key={task.id}
               task={task}
+              columns={allColumns}
+              isDragging={activeMoveTaskId === task.id}
+              isSelectedToMove={selectedTaskToMove?.id === task.id}
               onDelete={onDeleteTask}
-              onDragStart={() => {}}
-              onDragEnd={() => setIsOver(false)}
+              onDragStart={() => {
+                onDragStartTask?.(task.id);
+              }}
+              onDragEnd={() => {
+                setIsOver(false);
+                onDragEndTask?.();
+              }}
               onClick={onCardClick}
+              onSelectToMove={onSelectTaskToMove}
+              onMoveToColumn={onMoveTask}
             />
           ))
         )}

@@ -12,19 +12,27 @@ import {
   ListTodo,
   AlertTriangle,
   LogOut,
-  Kanban,
-  PenTool,
   Menu,
-  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal,
+  X,
+  MoreVertical,
 } from "lucide-react";
 import { PlannerTask, ColumnSortOption } from "@/types/planner";
 import { SyncStatus } from "@/lib/planner-store";
 import { useAuth } from "@/lib/auth-context";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { BrandLogo } from "@/components/brand-logo";
 import { UserButton } from "@/components/auth/user-button";
 import { SupabaseSetupDialog } from "./supabase-setup-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface KanbanHeaderProps {
   tasks: PlannerTask[];
@@ -65,6 +73,9 @@ export function KanbanHeader({
 }: KanbanHeaderProps) {
   const [copied, setCopied] = useState(false);
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
+  const [showMobileMetrics, setShowMobileMetrics] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [activeSort, setActiveSort] = useState<ColumnSortOption>("manual");
   const { user, isGuestMode, exitGuestMode } = useAuth();
 
   const totalTasks = tasks.length;
@@ -85,6 +96,23 @@ export function KanbanHeader({
   ).length;
   const completionRate =
     totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0;
+
+  // Contador de filtros ativos
+  const activeFiltersCount =
+    (categoryFilter !== "all" ? 1 : 0) +
+    (priorityFilter !== "all" ? 1 : 0) +
+    (activeSort !== "manual" ? 1 : 0) +
+    (searchQuery.trim() ? 1 : 0);
+
+  const handleClearFilters = () => {
+    setCategoryFilter("all");
+    setPriorityFilter("all");
+    setSearchQuery("");
+    if (onApplySortToAllColumns) {
+      setActiveSort("manual");
+      onApplySortToAllColumns("manual");
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -111,49 +139,48 @@ export function KanbanHeader({
   };
 
   return (
-    <div className="flex flex-col gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
-      {/* Top Row: Brand & Quick Actions */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        {/* Left: Mobile Toggle & Page Title */}
-        <div className="flex items-center gap-3">
-          {/* Botão de Menu para Mobile */}
+    <div className="flex flex-col gap-3.5 border-b border-slate-200 dark:border-white/10 pb-4">
+      {/* Top Bar: Reorganizado de forma limpa, sem quebras desordenadas */}
+      <div className="flex items-center justify-between gap-2">
+        {/* Esquerda: Menu Lateral + Título do Quadro + Status */}
+        <div className="flex items-center gap-2.5 min-w-0">
           {onToggleMobileMenu && (
             <button
               type="button"
               onClick={onToggleMobileMenu}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 md:hidden text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 md:hidden text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
               title="Abrir menu lateral"
             >
               <Menu className="h-5 w-5" />
             </button>
           )}
 
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="font-comfortaa text-lg font-bold text-slate-900 dark:text-white">
+              <h1 className="font-comfortaa text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
                 {activeTab === "kanban" ? "Card" : "Excalidraw"}
               </h1>
               {activeTab === "kanban" ? (
-                <span className="font-mono text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-extrabold border border-cyan-500/20">
-                  {totalTasks} {totalTasks === 1 ? "tarefa" : "tarefas"}
+                <span className="font-mono text-[11px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-extrabold border border-cyan-500/20 shrink-0">
+                  {totalTasks} <span className="hidden xs:inline">{totalTasks === 1 ? "tarefa" : "tarefas"}</span>
                 </span>
               ) : (
-                <span className="font-mono text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-extrabold border border-cyan-500/20">
+                <span className="font-mono text-[11px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 font-extrabold border border-cyan-500/20 shrink-0">
                   Whiteboard
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
+            <p className="hidden sm:block text-[11px] text-slate-500 dark:text-slate-400 font-sans truncate">
               {activeTab === "kanban"
                 ? `${columnsCount} etapas de trabalho • Foco e execução`
                 : "Ideação livre, diagramas e arquitetura"}
             </p>
           </div>
 
-          {/* Sync Status (apenas quando precisa de ação ou aviso - 'Nuvem Ativa' removida conforme solicitado) */}
+          {/* Sync Status - discreto no desktop e mobile */}
           {syncStatus === "syncing" && (
-            <div className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-[11px] font-mono font-medium">
-              <div className="h-2.5 w-2.5 animate-spin rounded-full border border-cyan-500 dark:border-cyan-400 border-t-transparent" />
+            <div className="hidden sm:flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-[11px] font-mono font-medium shrink-0">
+              <div className="h-2 w-2 animate-spin rounded-full border border-cyan-500 dark:border-cyan-400 border-t-transparent" />
               <span className="font-comfortaa">Salvando...</span>
             </div>
           )}
@@ -161,39 +188,52 @@ export function KanbanHeader({
           {syncStatus === "needs_schema" && (
             <button
               onClick={() => setIsSetupDialogOpen(true)}
-              className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-300 hover:bg-amber-500/20 text-[11px] font-comfortaa font-bold transition-all cursor-pointer shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+              className="flex items-center gap-1.5 h-7 px-2 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-300 hover:bg-amber-500/20 text-[11px] font-comfortaa font-bold transition-all cursor-pointer shadow-xs shrink-0"
               title="Clique para ver instruções de ativação das tabelas no Supabase"
             >
               <AlertTriangle className="h-3 w-3 text-amber-500 dark:text-amber-400 animate-pulse" />
-              <span>Configurar Banco</span>
-            </button>
-          )}
-
-          {syncStatus === "local" && (
-            <button
-              onClick={onSyncLocalToCloud}
-              className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white/80 dark:bg-[#0b0f1a]/95 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 text-[11px] font-comfortaa transition-all cursor-pointer shadow-xs"
-              title="Salvo apenas neste navegador. Faça login para salvar na nuvem."
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
-              <span>Modo Local</span>
+              <span className="hidden xs:inline">Configurar Banco</span>
             </button>
           )}
 
           {syncStatus === "error" && (
-            <div className="flex items-center gap-1.5 h-7 px-2.5 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[11px] font-mono font-medium">
-              <AlertCircle className="h-3 w-3 text-rose-500 dark:text-rose-400" />
-              <span className="font-comfortaa">Offline / Erro</span>
+            <div className="flex items-center gap-1.5 h-7 px-2 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[11px] font-mono font-medium shrink-0">
+              <AlertCircle className="h-3 w-3 text-rose-500" />
+              <span className="hidden xs:inline font-comfortaa">Offline</span>
             </div>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Botão de Compartilhar Link */}
+        {/* Direita: Ações Rápidas (Organizadas e Compactas) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Botão Novo Card Principal - Destaque Neon Cyan */}
+          {activeTab === "kanban" && (
+            <button
+              onClick={onOpenNewCard}
+              className="flex items-center gap-1.5 h-9 px-3 sm:px-3.5 rounded-xl text-xs font-bold font-comfortaa bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-slate-950 shadow-md shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all cursor-pointer shrink-0"
+              title="Criar novo card no quadro"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden xs:inline">Novo Card</span>
+            </button>
+          )}
+
+          {/* Desktop Only: Botão Nova Etapa */}
+          {activeTab === "kanban" && (
+            <button
+              onClick={onOpenNewColumn}
+              className="hidden md:flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs"
+              title="Criar nova etapa no quadro"
+            >
+              <Columns3 className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+              <span className="font-comfortaa">Nova Etapa</span>
+            </button>
+          )}
+
+          {/* Desktop Only: Compartilhar Link */}
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs"
+            className="hidden md:flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs"
             title="Copiar link ou compartilhar o planner"
           >
             {copied ? (
@@ -204,7 +244,7 @@ export function KanbanHeader({
             ) : (
               <>
                 <Share2 className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
-                <span className="hidden sm:inline font-comfortaa">Compartilhar</span>
+                <span className="font-comfortaa">Compartilhar</span>
               </>
             )}
           </button>
@@ -212,53 +252,127 @@ export function KanbanHeader({
           {/* Alternador de Tema */}
           <ThemeToggle />
 
-          {/* Se estiver no Modo Convidado: Botão para Retornar ao Login */}
+          {/* Desktop Only: Modo Convidado Sair */}
           {isGuestMode && !user && (
             <button
               onClick={exitGuestMode}
-              className="flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-[#0b0f1a]/95 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-comfortaa transition-all cursor-pointer shadow-xs"
+              className="hidden md:flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-[#0b0f1a]/95 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-comfortaa transition-all cursor-pointer shadow-xs"
               title="Voltar à tela inicial de login"
             >
               <LogOut className="h-3.5 w-3.5 text-slate-400" />
-              <span className="hidden sm:inline">Tela de Login</span>
+              <span>Login</span>
             </button>
           )}
 
-          {/* Auth Button com Perfil, Trocar de Conta e Logout */}
+          {/* Botão de Perfil do Usuário */}
           <UserButton />
 
-          {/* Botões específicos do Kanban */}
-          {activeTab === "kanban" && (
-            <>
-              {/* Botão Nova Etapa */}
-              <button
-                onClick={onOpenNewColumn}
-                className="flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs"
-                title="Criar nova etapa no quadro"
-              >
-                <Columns3 className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
-                <span className="hidden sm:inline font-comfortaa">Nova Etapa</span>
-              </button>
+          {/* Mobile Only: Menu Compacto de Mais Opções (...) */}
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors cursor-pointer shadow-xs">
+                <MoreVertical className="h-4 w-4" />
+              </DropdownMenuTrigger>
 
-              {/* Botão Novo Card Principal */}
-              <button
-                onClick={onOpenNewCard}
-                className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-bold font-comfortaa bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-slate-950 shadow-md shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all cursor-pointer"
+              <DropdownMenuContent
+                align="end"
+                className="w-56 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-1.5 text-xs shadow-2xl"
               >
-                <Plus className="h-4 w-4" />
-                <span>Novo Card</span>
-              </button>
-            </>
-          )}
+                {activeTab === "kanban" && (
+                  <DropdownMenuItem
+                    onClick={onOpenNewColumn}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] font-comfortaa font-medium"
+                  >
+                    <Columns3 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+                    <span>Nova Etapa</span>
+                  </DropdownMenuItem>
+                )}
+
+                <DropdownMenuItem
+                  onClick={handleShare}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] font-comfortaa font-medium"
+                >
+                  <Share2 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+                  <span>Compartilhar Link</span>
+                </DropdownMenuItem>
+
+                {syncStatus === "local" && onSyncLocalToCloud && (
+                  <DropdownMenuItem
+                    onClick={onSyncLocalToCloud}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] font-comfortaa font-medium"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-slate-400" />
+                    <span>Sincronizar Nuvem</span>
+                  </DropdownMenuItem>
+                )}
+
+                {isGuestMode && !user && (
+                  <>
+                    <DropdownMenuSeparator className="bg-slate-200 dark:border-white/10 my-1" />
+                    <DropdownMenuItem
+                      onClick={exitGuestMode}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-comfortaa font-medium"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Tela de Login</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
       {activeTab === "kanban" && (
         <>
-          {/* Row of 4 Obsidian Glass Metric Cards with Semantic Neon Highlights */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in duration-200">
+          {/* Mobile: Barra de Resumo de Métricas Compacta (38px de altura vs 220px dos 4 cards antigos) */}
+          <div className="md:hidden flex items-center justify-between p-2 px-3 rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-xs">
+            <div className="flex items-center gap-2.5 sm:gap-3.5 font-mono text-xs">
+              <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                <span className="h-2 w-2 rounded-full bg-[#06b6d4] shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
+                <span className="font-extrabold">{totalTasks}</span>
+                <span className="text-[10px] text-slate-400 font-sans">total</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[#f59e0b]">
+                <span className="h-2 w-2 rounded-full bg-[#f59e0b] shadow-[0_0_6px_rgba(245,158,11,0.8)]" />
+                <span className="font-extrabold">{inProgressCount}</span>
+                <span className="text-[10px] text-slate-400 font-sans">foco</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[#f43f5e]">
+                <span className="h-2 w-2 rounded-full bg-[#f43f5e] shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
+                <span className="font-extrabold">{criticalCount}</span>
+                <span className="text-[10px] text-slate-400 font-sans">urgente</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[#10b981]">
+                <span className="h-2 w-2 rounded-full bg-[#10b981] shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
+                <span className="font-extrabold">{completionRate}%</span>
+                <span className="text-[10px] text-slate-400 font-sans">taxa</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowMobileMetrics(!showMobileMetrics)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-comfortaa font-semibold text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <span>{showMobileMetrics ? "Ocultar" : "Detalhes"}</span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                  showMobileMetrics ? "rotate-180 text-cyan-500" : ""
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Grid de 4 Cards de Métricas Obsidian Glass (Sempre visível no Desktop, expansível no Mobile) */}
+          <div
+            className={`grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in duration-200 ${
+              showMobileMetrics ? "grid" : "hidden md:grid"
+            }`}
+          >
             {/* Cyan Metric: Total de Tarefas (#06b6d4) */}
-            <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-cyan-500/40 p-3.5 transition-all duration-200 shadow-sm dark:shadow-xl dark:shadow-black/20 group">
+            <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-cyan-500/40 p-3 sm:p-3.5 transition-all duration-200 shadow-sm dark:shadow-xl dark:shadow-black/20 group">
               <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#06b6d4] to-transparent opacity-80" />
               <div className="flex items-center justify-between">
                 <span className="font-comfortaa text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -279,7 +393,7 @@ export function KanbanHeader({
             </div>
 
             {/* Amber Metric: Em Execução (#f59e0b) */}
-            <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-amber-500/40 p-3.5 transition-all duration-200 shadow-sm dark:shadow-xl dark:shadow-black/20 group">
+            <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-amber-500/40 p-3 sm:p-3.5 transition-all duration-200 shadow-sm dark:shadow-xl dark:shadow-black/20 group">
               <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#f59e0b] to-transparent opacity-80" />
               <div className="flex items-center justify-between">
                 <span className="font-comfortaa text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -299,8 +413,8 @@ export function KanbanHeader({
               </div>
             </div>
 
-            {/* Rose/Magenta Metric: Críticos / Urgentes (#f43f5e) */}
-            <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-rose-500/40 p-3.5 transition-all duration-200 shadow-sm dark:shadow-xl dark:shadow-black/20 group">
+            {/* Rose Metric: Críticos / Urgentes (#f43f5e) */}
+            <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-rose-500/40 p-3 sm:p-3.5 transition-all duration-200 shadow-sm dark:shadow-xl dark:shadow-black/20 group">
               <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#f43f5e] to-transparent opacity-80" />
               <div className="flex items-center justify-between">
                 <span className="font-comfortaa text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -321,7 +435,7 @@ export function KanbanHeader({
             </div>
 
             {/* Emerald Metric: Concluídas (#10b981) */}
-            <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-emerald-500/40 p-3.5 transition-all duration-200 shadow-sm dark:shadow-xl dark:shadow-black/20 group">
+            <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-emerald-500/40 p-3 sm:p-3.5 transition-all duration-200 shadow-sm dark:shadow-xl dark:shadow-black/20 group">
               <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#10b981] to-transparent opacity-80" />
               <div className="flex items-center justify-between">
                 <span className="font-comfortaa text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -342,69 +456,181 @@ export function KanbanHeader({
             </div>
           </div>
 
-          {/* Barra de Busca e Filtros em Obsidian Glass */}
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-2.5 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-colors shadow-sm dark:shadow-lg dark:shadow-black/20 animate-in fade-in duration-200">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filtrar por título, código (#RN-101)..."
-                className="h-9 pl-9 bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
-              />
-            </div>
-
-            {/* Dropdown Filters */}
+          {/* Barra de Busca e Filtros - Totalmente adaptada para Mobile & Desktop */}
+          <div className="flex flex-col gap-2.5 bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-2.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-lg dark:shadow-black/20 animate-in fade-in duration-200">
+            {/* Linha Principal de Busca + Gatilho de Filtros no Mobile */}
             <div className="flex items-center gap-2">
-              {/* Categoria */}
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs font-comfortaa"
-              >
-                <option value="all">Todas Categorias</option>
-                <option value="work">Tech / Trabalho</option>
-                <option value="study">Estudo</option>
-                <option value="health">Saúde / Treino</option>
-                <option value="finance">Finanças</option>
-                <option value="personal">Pessoal</option>
-              </select>
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filtrar por título, código (#RN-101)..."
+                  className="h-9 pl-9 bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
 
-              {/* Prioridade */}
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs font-comfortaa"
+              {/* Botão de Filtros exclusivo para Mobile */}
+              <button
+                type="button"
+                onClick={() => setShowMobileFilters(!showMobileFilters)}
+                className={`md:hidden flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-comfortaa font-medium transition-all cursor-pointer shrink-0 ${
+                  activeFiltersCount > 0 || showMobileFilters
+                    ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
+                    : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#090d16] text-slate-700 dark:text-slate-300"
+                }`}
               >
-                <option value="all">Todas Prioridades</option>
-                <option value="critical">Crítica</option>
-                <option value="medium">Média</option>
-                <option value="low">Baixa</option>
-              </select>
+                <SlidersHorizontal className="h-3.5 w-3.5 text-cyan-500" />
+                <span>Filtros</span>
+                {activeFiltersCount > 0 && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-cyan-500 text-slate-950 font-mono text-[10px] font-extrabold">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
 
-              {/* Ordenar Todas as Etapas */}
-              {onApplySortToAllColumns && (
-                <div className="relative">
+              {/* Dropdowns Desktop (Side by Side) */}
+              <div className="hidden md:flex items-center gap-2 shrink-0">
+                {/* Categoria */}
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs font-comfortaa"
+                >
+                  <option value="all">Todas Categorias</option>
+                  <option value="work">Tech / Trabalho</option>
+                  <option value="study">Estudo</option>
+                  <option value="health">Saúde / Treino</option>
+                  <option value="finance">Finanças</option>
+                  <option value="personal">Pessoal</option>
+                </select>
+
+                {/* Prioridade */}
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs font-comfortaa"
+                >
+                  <option value="all">Todas Prioridades</option>
+                  <option value="critical">Crítica</option>
+                  <option value="medium">Média</option>
+                  <option value="low">Baixa</option>
+                </select>
+
+                {/* Ordenar Todas as Etapas */}
+                {onApplySortToAllColumns && (
                   <select
-                    defaultValue="manual"
+                    value={activeSort}
                     onChange={(e) => {
                       const val = e.target.value as ColumnSortOption;
+                      setActiveSort(val);
                       onApplySortToAllColumns(val);
                     }}
                     className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs font-comfortaa"
                     title="Organizar todas as etapas do quadro de uma só vez"
                   >
                     <option value="manual">Ordenar: Manual (Padrão)</option>
-                    <option value="priority-desc">Ordenar: Prioridade (Alta → Baixa)</option>
-                    <option value="priority-asc">Ordenar: Prioridade (Baixa → Alta)</option>
-                    <option value="date-desc">Ordenar: Data (Mais novo → Antigo)</option>
-                    <option value="date-asc">Ordenar: Data (Mais antigo → Novo)</option>
-                    <option value="due-asc">Ordenar: Prazo (Mais próximo)</option>
+                    <option value="priority-desc">Prioridade (Alta → Baixa)</option>
+                    <option value="priority-asc">Prioridade (Baixa → Alta)</option>
+                    <option value="date-desc">Data (Mais novo → Antigo)</option>
+                    <option value="date-asc">Data (Mais antigo → Novo)</option>
+                    <option value="due-asc">Prazo (Mais próximo)</option>
                   </select>
-                </div>
-              )}
+                )}
+
+                {/* Limpar Filtros se Ativos */}
+                {activeFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    className="h-9 px-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-rose-500/30 text-slate-500 hover:text-rose-500 text-xs font-comfortaa transition-colors cursor-pointer flex items-center gap-1"
+                    title="Limpar todos os filtros"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    <span>Limpar</span>
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Painel de Filtros Desdobrável no Mobile */}
+            {showMobileFilters && (
+              <div className="md:hidden flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-white/5 animate-in slide-in-from-top-2 duration-150">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-mono text-slate-400 uppercase">Categoria</label>
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 font-comfortaa"
+                    >
+                      <option value="all">Todas Categorias</option>
+                      <option value="work">Tech / Trabalho</option>
+                      <option value="study">Estudo</option>
+                      <option value="health">Saúde / Treino</option>
+                      <option value="finance">Finanças</option>
+                      <option value="personal">Pessoal</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-mono text-slate-400 uppercase">Prioridade</label>
+                    <select
+                      value={priorityFilter}
+                      onChange={(e) => setPriorityFilter(e.target.value)}
+                      className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 font-comfortaa"
+                    >
+                      <option value="all">Todas Prioridades</option>
+                      <option value="critical">Crítica</option>
+                      <option value="medium">Média</option>
+                      <option value="low">Baixa</option>
+                    </select>
+                  </div>
+
+                  {onApplySortToAllColumns && (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-[10px] font-mono text-slate-400 uppercase">Ordenar Quadro</label>
+                      <select
+                        value={activeSort}
+                        onChange={(e) => {
+                          const val = e.target.value as ColumnSortOption;
+                          setActiveSort(val);
+                          onApplySortToAllColumns(val);
+                        }}
+                        className="h-9 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 font-comfortaa"
+                      >
+                        <option value="manual">Manual (Padrão)</option>
+                        <option value="priority-desc">Prioridade (Alta → Baixa)</option>
+                        <option value="priority-asc">Prioridade (Baixa → Alta)</option>
+                        <option value="date-desc">Data (Mais novo)</option>
+                        <option value="date-asc">Data (Mais antigo)</option>
+                        <option value="due-asc">Prazo (Urgente)</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {activeFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    className="self-end mt-1 px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-comfortaa font-medium flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    <span>Limpar filtros ativos</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}

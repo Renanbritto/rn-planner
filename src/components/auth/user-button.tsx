@@ -32,7 +32,7 @@ export function UserButton() {
           setIsProcessing(false);
         }}
         disabled={isProcessing}
-        className="flex items-center gap-2 h-9 px-3.5 rounded-xl text-xs font-comfortaa font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-50 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+        className="flex items-center gap-1.5 h-9 px-2.5 sm:px-3.5 rounded-xl text-xs font-comfortaa font-medium text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-50 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 transition-all cursor-pointer shadow-xs disabled:opacity-50"
         title="Fazer login para sincronizar suas tarefas na nuvem"
       >
         <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24">
@@ -53,7 +53,8 @@ export function UserButton() {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
           />
         </svg>
-        <span>{isProcessing ? "Entrando..." : "Entrar com Google"}</span>
+        <span className="hidden sm:inline">{isProcessing ? "Entrando..." : "Entrar com Google"}</span>
+        <span className="sm:hidden">{isProcessing ? "..." : "Entrar"}</span>
       </button>
     );
   }
@@ -71,7 +72,7 @@ export function UserButton() {
     <div className="flex items-center gap-1.5">
       {/* Dropdown com Perfil e Ações de Conta */}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-2 h-9 pl-1.5 pr-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/50">
+        <DropdownMenuTrigger className="flex items-center gap-1.5 sm:gap-2 h-9 px-2 sm:pl-1.5 sm:pr-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-1 focus:ring-cyan-500/50">
           {user.avatarUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
@@ -84,7 +85,7 @@ export function UserButton() {
               {initials}
             </div>
           )}
-          <span className="font-comfortaa text-xs font-medium text-slate-800 dark:text-slate-200 max-w-[110px] truncate">
+          <span className="hidden sm:inline-block font-comfortaa text-xs font-medium text-slate-800 dark:text-slate-200 max-w-[110px] truncate">
             {user.name}
           </span>
           <ChevronDown className="h-3 w-3 text-slate-400 dark:text-slate-400 opacity-70" />
@@ -144,7 +145,7 @@ export function UserButton() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Botão de Logout Rápido Direto no Header */}
+      {/* Botão de Logout Rápido (Apenas Desktop - no mobile fica no menu do perfil) */}
       <button
         onClick={async () => {
           setIsProcessing(true);
@@ -152,7 +153,7 @@ export function UserButton() {
           setIsProcessing(false);
         }}
         disabled={isProcessing}
-        className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:border-rose-500/40 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+        className="hidden md:flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:border-rose-500/40 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer shadow-xs disabled:opacity-50"
         title="Sair da conta"
       >
         <LogOut className="h-4 w-4" />

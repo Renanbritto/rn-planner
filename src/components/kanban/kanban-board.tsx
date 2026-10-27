@@ -12,7 +12,7 @@ import { ColumnActionsDialog } from "./column-actions-dialog";
 import { DeleteColumnDialog } from "./delete-column-dialog";
 import { NewColumnDialog } from "./new-column-dialog";
 import { CardDetailsDialog } from "./card-details-dialog";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 interface KanbanBoardProps {
   columns: KanbanColumnDef[];
@@ -49,6 +49,21 @@ export function KanbanBoard({
   const [isNewColDialogOpen, setIsNewColDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<PlannerTask | null>(null);
 
+  // Estados de movimentação de card (arrastar ou selecionar no mobile)
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+  const [selectedTaskToMove, setSelectedTaskToMove] = useState<PlannerTask | null>(null);
+
+  const activeMoveTaskId = draggingTaskId || selectedTaskToMove?.id || null;
+  const activeMoveTask = activeMoveTaskId
+    ? tasks.find((t) => t.id === activeMoveTaskId) || null
+    : null;
+
+  const handleMoveTaskWithFeedback = (taskId: string, targetColumn: string) => {
+    onMoveTask(taskId, targetColumn);
+    setDraggingTaskId(null);
+    setSelectedTaskToMove(null);
+  };
+
   const activeTask = selectedTask
     ? tasks.find((t) => t.id === selectedTask.id) || selectedTask
     : null;
@@ -58,7 +73,7 @@ export function KanbanBoard({
     : 0;
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
       {/* Container flex com scroll horizontal responsivo para qualquer quantidade de etapas */}
       <div className="flex items-start gap-5 overflow-x-auto pb-6 pt-1 px-1 scrollbar-thin scrollbar-thumb-white/10">
         {columns.map((col, index) => {
@@ -69,10 +84,17 @@ export function KanbanBoard({
               key={col.id}
               column={col}
               tasks={columnTasks}
+              allColumns={columns}
               isFirst={index === 0}
               isLast={index === columns.length - 1}
               totalColumns={columns.length}
-              onMoveTask={onMoveTask}
+              activeMoveTaskId={activeMoveTaskId}
+              activeMoveTask={activeMoveTask}
+              selectedTaskToMove={selectedTaskToMove}
+              onSelectTaskToMove={(task) => {
+                setSelectedTaskToMove((prev) => (prev?.id === task.id ? null : task));
+              }}
+              onMoveTask={handleMoveTaskWithFeedback}
               onDeleteTask={onDeleteTask}
               onQuickAdd={onQuickAdd}
               onOpenEditColumn={(c) => setEditingColumn(c)}
@@ -83,6 +105,11 @@ export function KanbanBoard({
               onUpdateColumnSort={(columnId, sortBy) =>
                 onUpdateColumn(columnId, { sortBy })
               }
+              onDragStartTask={(id) => setDraggingTaskId(id)}
+              onDragEndTask={() => {
+                setDraggingTaskId(null);
+                setSelectedTaskToMove(null);
+              }}
             />
           );
         })}
@@ -104,6 +131,33 @@ export function KanbanBoard({
           </span>
         </button>
       </div>
+
+      {/* Floating Action Bar quando um card está selecionado para mover (Excelente no Mobile) */}
+      {selectedTaskToMove && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-slate-900/95 dark:bg-[#0b0f1a]/98 backdrop-blur-2xl border border-cyan-500/50 shadow-2xl shadow-cyan-500/30 text-white animate-in slide-in-from-bottom-4 duration-200">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
+            <span className="font-mono font-extrabold text-xs text-cyan-400">
+              {selectedTaskToMove.code}
+            </span>
+            <span className="font-comfortaa text-xs font-medium text-slate-200 hidden sm:inline truncate max-w-[180px]">
+              {selectedTaskToMove.title}
+            </span>
+            <span className="text-[11px] text-cyan-300/90 font-sans">
+              • Toque na etapa desejada
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSelectedTaskToMove(null)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-comfortaa font-bold text-slate-200 hover:text-white transition-colors cursor-pointer shrink-0"
+          >
+            <X className="h-3.5 w-3.5" />
+            <span>Cancelar</span>
+          </button>
+        </div>
+      )}
 
       {/* Modal de Detalhes e Edição do Card */}
       <CardDetailsDialog

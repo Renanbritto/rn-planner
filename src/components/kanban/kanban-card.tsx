@@ -1,16 +1,38 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { PlannerTask, TaskCategory } from "@/types/planner";
-import { Calendar, Trash2, GripVertical, Maximize2, Image as ImageIcon } from "lucide-react";
+import { PlannerTask, TaskCategory, KanbanColumnDef, getColumnColorConfig } from "@/types/planner";
+import {
+  Calendar,
+  Trash2,
+  GripVertical,
+  Maximize2,
+  Image as ImageIcon,
+  ArrowRightLeft,
+  X,
+  Check,
+} from "lucide-react";
+import { toast } from "sonner";
 import { extractImagesFromMarkdown, getCleanSnippet } from "./rich-description";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface KanbanCardProps {
   task: PlannerTask;
+  columns?: KanbanColumnDef[];
+  isDragging?: boolean;
+  isSelectedToMove?: boolean;
   onDelete: (id: string) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
   onDragEnd: (e: React.DragEvent) => void;
   onClick?: (task: PlannerTask) => void;
+  onSelectToMove?: (task: PlannerTask) => void;
+  onMoveToColumn?: (taskId: string, targetColumn: string) => void;
 }
 
 const CATEGORY_MAP: Record<TaskCategory, { label: string; bg: string; text: string }> = {
@@ -23,12 +45,17 @@ const CATEGORY_MAP: Record<TaskCategory, { label: string; bg: string; text: stri
 
 export function KanbanCard({
   task,
+  columns = [],
+  isDragging = false,
+  isSelectedToMove = false,
   onDelete,
   onDragStart,
   onDragEnd,
   onClick,
+  onSelectToMove,
+  onMoveToColumn,
 }: KanbanCardProps) {
-  const [isDragging, setIsDragging] = useState(false);
+  const [isLocalDragging, setIsLocalDragging] = useState(false);
   const didDragRef = useRef(false);
   const categoryInfo = CATEGORY_MAP[task.category] || CATEGORY_MAP.work;
 
@@ -43,23 +70,25 @@ export function KanbanCard({
       ? "border-l-[#f59e0b]"
       : "border-l-[#06b6d4]";
 
+  const isMoving = isDragging || isLocalDragging || isSelectedToMove;
+
   const handleDragStart = (e: React.DragEvent) => {
     didDragRef.current = true;
-    setIsDragging(true);
+    setIsLocalDragging(true);
     e.dataTransfer.setData("text/plain", task.id);
     e.dataTransfer.effectAllowed = "move";
     onDragStart(e, task.id);
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
-    setIsDragging(false);
+    setIsLocalDragging(false);
     onDragEnd(e);
     setTimeout(() => {
       didDragRef.current = false;
     }, 120);
   };
 
-  const handleCardClick = (e: React.MouseEvent) => {
+  const handleCardClick = () => {
     if (didDragRef.current) return;
     onClick?.(task);
   };
@@ -70,19 +99,124 @@ export function KanbanCard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onClick={handleCardClick}
-      className={`group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-3.5 shadow-sm dark:shadow-lg dark:shadow-black/20 transition-all duration-200 cursor-pointer active:cursor-grabbing border-l-4 ${borderStripeColor} ${
-        isDragging
-          ? "opacity-40 scale-95 border-dashed border-cyan-500/50"
-          : "hover:border-cyan-500/30 dark:hover:border-white/20 hover:bg-slate-50/80 dark:hover:bg-[#101626]/95 hover:shadow-md dark:hover:shadow-2xl dark:hover:shadow-black/40 hover:-translate-y-0.5"
+      className={`group relative flex flex-col justify-between rounded-2xl border p-3.5 backdrop-blur-2xl transition-all duration-200 cursor-pointer active:cursor-grabbing border-l-4 ${borderStripeColor} ${
+        isMoving
+          ? "border-cyan-400 ring-2 ring-cyan-400/50 bg-cyan-50/90 dark:bg-[#0c1829]/95 shadow-[0_0_24px_rgba(6,182,212,0.35)] scale-[1.02] z-20"
+          : "border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 shadow-sm dark:shadow-lg dark:shadow-black/20 hover:border-cyan-500/30 dark:hover:border-white/20 hover:bg-slate-50/80 dark:hover:bg-[#101626]/95 hover:shadow-md dark:hover:shadow-2xl dark:hover:shadow-black/40 hover:-translate-y-0.5"
       }`}
     >
+      {/* Banner Sinalizador quando o card está Selecionado para Mover */}
+      {isMoving && (
+        <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-cyan-500/20 text-cyan-700 dark:text-cyan-300">
+          <div className="flex items-center gap-1.5 font-comfortaa text-[11px] font-bold">
+            <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+            <ArrowRightLeft className="h-3.5 w-3.5 text-cyan-500" />
+            <span>Selecionado para mover</span>
+          </div>
+
+          {isSelectedToMove && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectToMove?.(task); // toggle off
+              }}
+              className="text-xs font-mono text-cyan-600 hover:text-cyan-800 dark:text-cyan-400 dark:hover:text-white px-1.5 py-0.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+              <span>Cancelar</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Header do Card: Código & Ações */}
       <div className="flex items-center justify-between text-xs mb-1.5">
         <div className="flex items-center gap-1.5">
-          <GripVertical className="h-3.5 w-3.5 text-slate-400 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors" />
+          <button
+            type="button"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectToMove?.(task);
+            }}
+            className={`p-1 rounded-lg transition-all cursor-pointer ${
+              isSelectedToMove
+                ? "bg-cyan-500 text-slate-950 shadow-[0_0_8px_rgba(6,182,212,0.6)] animate-pulse"
+                : "text-slate-400 dark:text-slate-500 hover:text-cyan-500 hover:bg-cyan-50 dark:hover:bg-cyan-500/10"
+            }`}
+            title={isSelectedToMove ? "Cancelar seleção de movimentação" : "Clique para selecionar e mover este card"}
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
+
           <span className="font-mono font-extrabold text-[11px] text-slate-500 dark:text-slate-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
             {task.code}
           </span>
+
+          {/* Botão Rápido de Mover para Outra Etapa */}
+          {columns.length > 1 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-slate-200 dark:border-white/10 hover:border-cyan-500/40 bg-slate-50 dark:bg-white/[0.04] hover:bg-cyan-50 dark:hover:bg-cyan-500/10 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors text-[10px] font-comfortaa font-semibold cursor-pointer"
+                title="Mover card para outra etapa"
+              >
+                <ArrowRightLeft className="h-3 w-3 text-cyan-500" />
+                <span className="hidden sm:inline">Mover</span>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                align="start"
+                className="w-56 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/98 backdrop-blur-2xl p-1.5 text-xs shadow-2xl z-50"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-2.5 py-1 text-[10px] font-comfortaa font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-white/5 mb-1">
+                  Mover para etapa:
+                </div>
+
+                {columns.map((col) => {
+                  const isCurrent = col.id === task.column;
+                  const colColor = getColumnColorConfig(col.color);
+                  return (
+                    <DropdownMenuItem
+                      key={col.id}
+                      disabled={isCurrent}
+                      onClick={() => {
+                        onMoveToColumn?.(task.id, col.id);
+                        toast.success(`Card ${task.code} movido para "${col.title}"!`);
+                      }}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl cursor-pointer font-comfortaa text-xs transition-colors ${
+                        isCurrent
+                          ? "opacity-50 cursor-not-allowed bg-slate-50 dark:bg-white/[0.02]"
+                          : "hover:bg-cyan-500/10 text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${colColor.dotColor}`} />
+                        <span>{col.title}</span>
+                      </div>
+                      {isCurrent ? (
+                        <span className="text-[10px] font-mono text-slate-400">Atual</span>
+                      ) : (
+                        <Check className="h-3 w-3 opacity-0 group-hover:opacity-100 text-cyan-500" />
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+
+                <DropdownMenuSeparator className="bg-slate-200 dark:border-white/10 my-1" />
+
+                <DropdownMenuItem
+                  onClick={() => onSelectToMove?.(task)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl cursor-pointer text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 font-comfortaa text-xs font-semibold"
+                >
+                  <GripVertical className="h-3.5 w-3.5" />
+                  <span>Selecionar no quadro</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5">
