@@ -4,7 +4,9 @@ import { useState } from "react";
 import {
   KanbanColumnDef,
   ColumnColor,
+  ColumnSortOption,
   COLUMN_COLOR_OPTIONS,
+  COLUMN_SORT_OPTIONS,
 } from "@/types/planner";
 import {
   Dialog,
@@ -14,7 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Sliders, Check } from "lucide-react";
+import { Sliders, Check, ArrowUpDown } from "lucide-react";
 
 interface ColumnActionsDialogProps {
   open: boolean;
@@ -22,7 +24,7 @@ interface ColumnActionsDialogProps {
   column: KanbanColumnDef | null;
   onUpdateColumn: (
     columnId: string,
-    updates: { title?: string; color?: ColumnColor }
+    updates: { title?: string; color?: ColumnColor; sortBy?: ColumnSortOption }
   ) => void;
 }
 
@@ -35,11 +37,13 @@ export function ColumnActionsDialog({
   const [prevColumn, setPrevColumn] = useState(column);
   const [title, setTitle] = useState(column?.title || "");
   const [color, setColor] = useState<ColumnColor>(column?.color || "cyan");
+  const [sortBy, setSortBy] = useState<ColumnSortOption>(column?.sortBy || "manual");
 
   if (column !== prevColumn) {
     setPrevColumn(column);
     setTitle(column?.title || "");
     setColor(column?.color || "cyan");
+    setSortBy(column?.sortBy || "manual");
   }
 
   if (!column) return null;
@@ -51,6 +55,7 @@ export function ColumnActionsDialog({
     onUpdateColumn(column.id, {
       title: title.trim(),
       color,
+      sortBy,
     });
     onOpenChange(false);
   };
@@ -119,6 +124,33 @@ export function ColumnActionsDialog({
                 );
               })}
             </div>
+          </div>
+
+          {/* Ordenação dos Cards na Etapa */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className="font-comfortaa text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <ArrowUpDown className="h-3.5 w-3.5 text-cyan-500" />
+                <span>Ordenação dos Cards</span>
+              </label>
+              <span className="font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                Padrão da etapa
+              </span>
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as ColumnSortOption)}
+              className="h-9.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs font-comfortaa"
+            >
+              {COLUMN_SORT_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
+              {COLUMN_SORT_OPTIONS.find((opt) => opt.id === sortBy)?.description}
+            </p>
           </div>
 
           <DialogFooter className="mt-3 flex gap-2">

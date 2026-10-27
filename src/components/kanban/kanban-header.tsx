@@ -15,8 +15,9 @@ import {
   Kanban,
   PenTool,
   Menu,
+  ArrowUpDown,
 } from "lucide-react";
-import { PlannerTask } from "@/types/planner";
+import { PlannerTask, ColumnSortOption } from "@/types/planner";
 import { SyncStatus } from "@/lib/planner-store";
 import { useAuth } from "@/lib/auth-context";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ interface KanbanHeaderProps {
   activeTab?: "kanban" | "whiteboard";
   setActiveTab?: (tab: "kanban" | "whiteboard") => void;
   onToggleMobileMenu?: () => void;
+  onApplySortToAllColumns?: (sortBy: ColumnSortOption) => void;
 }
 
 export function KanbanHeader({
@@ -59,6 +61,7 @@ export function KanbanHeader({
   activeTab = "kanban",
   setActiveTab,
   onToggleMobileMenu,
+  onApplySortToAllColumns,
 }: KanbanHeaderProps) {
   const [copied, setCopied] = useState(false);
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
@@ -379,6 +382,28 @@ export function KanbanHeader({
                 <option value="medium">Média</option>
                 <option value="low">Baixa</option>
               </select>
+
+              {/* Ordenar Todas as Etapas */}
+              {onApplySortToAllColumns && (
+                <div className="relative">
+                  <select
+                    defaultValue="manual"
+                    onChange={(e) => {
+                      const val = e.target.value as ColumnSortOption;
+                      onApplySortToAllColumns(val);
+                    }}
+                    className="h-9 rounded-xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16] px-3 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 cursor-pointer shadow-xs font-comfortaa"
+                    title="Organizar todas as etapas do quadro de uma só vez"
+                  >
+                    <option value="manual">Ordenar: Manual (Padrão)</option>
+                    <option value="priority-desc">Ordenar: Prioridade (Alta → Baixa)</option>
+                    <option value="priority-asc">Ordenar: Prioridade (Baixa → Alta)</option>
+                    <option value="date-desc">Ordenar: Data (Mais novo → Antigo)</option>
+                    <option value="date-asc">Ordenar: Data (Mais antigo → Novo)</option>
+                    <option value="due-asc">Ordenar: Prazo (Mais próximo)</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </>

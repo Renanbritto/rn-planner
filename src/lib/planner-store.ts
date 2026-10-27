@@ -5,6 +5,7 @@ import {
   PlannerTask,
   KanbanColumnDef,
   ColumnColor,
+  ColumnSortOption,
   Priority,
   TaskCategory,
   Workspace,
@@ -63,9 +64,27 @@ function getStoredActiveWorkspaceId(): string {
   return DEFAULT_WORKSPACE.id;
 }
 
+function getStoredLocalSorts(): Record<string, ColumnSortOption> {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = localStorage.getItem("rn_planner_column_sorts");
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn("Erro ao carregar ordenações do LocalStorage", e);
+  }
+  return {};
+}
+
 function getStoredLocalColumns(): KanbanColumnDef[] {
+  const sortsMap = getStoredLocalSorts();
   if (typeof window === "undefined") {
-    return DEFAULT_COLUMNS.map((c) => ({ ...c, workspaceId: DEFAULT_WORKSPACE.id }));
+    return DEFAULT_COLUMNS.map((c) => ({
+      ...c,
+      workspaceId: DEFAULT_WORKSPACE.id,
+      sortBy: sortsMap[c.id] || "manual",
+    }));
   }
   try {
     const storedCols = localStorage.getItem("rn_planner_board_columns");
@@ -76,6 +95,7 @@ function getStoredLocalColumns(): KanbanColumnDef[] {
           .map((c) => ({
             ...c,
             workspaceId: c.workspaceId || DEFAULT_WORKSPACE.id,
+            sortBy: sortsMap[c.id] || c.sortBy || "manual",
           }))
           .sort((a, b) => a.order - b.order);
       }
@@ -83,7 +103,11 @@ function getStoredLocalColumns(): KanbanColumnDef[] {
   } catch (e) {
     console.warn("Erro ao carregar colunas do LocalStorage", e);
   }
-  return DEFAULT_COLUMNS.map((c) => ({ ...c, workspaceId: DEFAULT_WORKSPACE.id }));
+  return DEFAULT_COLUMNS.map((c) => ({
+    ...c,
+    workspaceId: DEFAULT_WORKSPACE.id,
+    sortBy: sortsMap[c.id] || "manual",
+  }));
 }
 
 function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
@@ -203,7 +227,12 @@ export function usePlanner() {
         setTasks(getStoredLocalTasks(cols));
         toast.error(`Falha ao conectar na nuvem: ${result.error}`);
       } else {
-        setColumns(result.columns);
+        const sortsMap = getStoredLocalSorts();
+        const colsWithSort = result.columns.map((c) => ({
+          ...c,
+          sortBy: sortsMap[c.id] || c.sortBy || "manual",
+        }));
+        setColumns(colsWithSort);
         setTasks(result.tasks);
         setSyncStatus("synced");
         setSyncErrorMessage(null);
@@ -356,25 +385,36 @@ export function usePlanner() {
     return newCol;
   };
 
-  // Editar etapa (nome e/ou cor)
+  // Editar etapa (nome, cor e/ou ordenação de cards)
   const updateColumn = async (
     columnId: string,
-    updates: { title?: string; color?: ColumnColor }
+    updates: { title?: string; color?: ColumnColor; sortBy?: ColumnSortOption }
   ) => {
     let updatedTargetCol: KanbanColumnDef | null = null;
 
     setColumns((prev) =>
       prev.map((col) => {
         if (col.id !== columnId) return col;
-        const updated = {
+        const updated: KanbanColumnDef = {
           ...col,
           title: updates.title !== undefined ? sanitizeString(updates.title, 40) || col.title : col.title,
           color: updates.color !== undefined ? updates.color : col.color,
+          sortBy: updates.sortBy !== undefined ? updates.sortBy : col.sortBy || "manual",
         };
         updatedTargetCol = updated;
         return updated;
       })
     );
+
+    if (updates.sortBy !== undefined && typeof window !== "undefined") {
+      try {
+        const sortsMap = getStoredLocalSorts();
+        sortsMap[columnId] = updates.sortBy;
+        localStorage.setItem("rn_planner_column_sorts", JSON.stringify(sortsMap));
+      } catch (e) {
+        console.warn("Erro ao salvar ordenação da coluna", e);
+      }
+    }
 
     if (user && updatedTargetCol && syncStatus !== "needs_schema") {
       setSyncStatus("syncing");
@@ -385,6 +425,33 @@ export function usePlanner() {
         setSyncStatus("error");
       } else {
         setSyncStatus("synced");
+      }
+    }
+  };
+
+  // Aplicar ordenação a todas as etapas do workspace ativo
+  const applySortToAllColumns = (sortBy: ColumnSortOption) => {
+    setColumns((prev) =>
+      prev.map((col) => {
+        const isCurrentWorkspace =
+          (col.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId;
+        if (!isCurrentWorkspace) return col;
+        return {
+          ...col,
+          sortBy,
+        };
+      })
+    );
+
+    if (typeof window !== "undefined") {
+      try {
+        const sortsMap = getStoredLocalSorts();
+        activeWorkspaceColumns.forEach((col) => {
+          sortsMap[col.id] = sortBy;
+        });
+        localStorage.setItem("rn_planner_column_sorts", JSON.stringify(sortsMap));
+      } catch (e) {
+        console.warn("Erro ao salvar ordenações globais", e);
       }
     }
   };
@@ -753,6 +820,7 @@ export function usePlanner() {
     moveColumn,
     clearColumnTasks,
     resetToDefaultColumns,
+    applySortToAllColumns,
     // Task operations
     moveTask,
     addTask,

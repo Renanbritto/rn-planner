@@ -62,6 +62,7 @@ export default function PlannerPage() {
     deleteColumn,
     moveColumn,
     clearColumnTasks,
+    applySortToAllColumns,
     // Task operations
     moveTask,
     addTask,
@@ -164,6 +165,7 @@ export default function PlannerPage() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             onToggleMobileMenu={() => setIsMobileSidebarOpen(true)}
+            onApplySortToAllColumns={applySortToAllColumns}
           />
 
           {/* Alternância entre Quadro Kanban e Whiteboard Canvas (Excalidraw) */}

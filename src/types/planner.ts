@@ -60,12 +60,21 @@ export const WORKSPACE_LUCIDE_ICONS = [
   "Coffee",
 ] as const;
 
+export type ColumnSortOption =
+  | "manual"
+  | "priority-desc"
+  | "priority-asc"
+  | "date-desc"
+  | "date-asc"
+  | "due-asc";
+
 export interface KanbanColumnDef {
   id: string; // unique id e.g. "todo", "in_progress", "col-12345"
   title: string;
   color: ColumnColor;
   order: number;
   workspaceId?: string;
+  sortBy?: ColumnSortOption;
 }
 
 export type Priority = "critical" | "medium" | "low";
@@ -187,3 +196,121 @@ export function getColumnColorConfig(color?: ColumnColor): ColorPaletteItem {
     COLUMN_COLOR_OPTIONS[0]
   );
 }
+
+export interface SortOptionItem {
+  id: ColumnSortOption;
+  label: string;
+  shortLabel: string;
+  description: string;
+}
+
+export const COLUMN_SORT_OPTIONS: SortOptionItem[] = [
+  {
+    id: "manual",
+    label: "Ordem manual (Padrão)",
+    shortLabel: "Manual",
+    description: "Posicionamento livre de cards",
+  },
+  {
+    id: "priority-desc",
+    label: "Prioridade: Alta → Baixa",
+    shortLabel: "Prioridade (Alta)",
+    description: "Crítica primeiro, depois Média e Baixa",
+  },
+  {
+    id: "priority-asc",
+    label: "Prioridade: Baixa → Alta",
+    shortLabel: "Prioridade (Baixa)",
+    description: "Baixa primeiro, depois Média e Crítica",
+  },
+  {
+    id: "date-desc",
+    label: "Data: Mais novo para mais antigo",
+    shortLabel: "Mais novos",
+    description: "Cards criados recentemente no topo",
+  },
+  {
+    id: "date-asc",
+    label: "Data: Mais antigo para mais novo",
+    shortLabel: "Mais antigos",
+    description: "Cards mais antigos no topo",
+  },
+  {
+    id: "due-asc",
+    label: "Prazo: Mais próximo primeiro",
+    shortLabel: "Prazo",
+    description: "Vencimentos mais urgentes no topo",
+  },
+];
+
+export function getColumnSortConfig(sortBy?: ColumnSortOption): SortOptionItem {
+  return (
+    COLUMN_SORT_OPTIONS.find((item) => item.id === sortBy) ||
+    COLUMN_SORT_OPTIONS[0]
+  );
+}
+
+function parseDateSafe(dateStr?: string): number {
+  if (!dateStr) return 0;
+  const time = new Date(dateStr).getTime();
+  return isNaN(time) ? 0 : time;
+}
+
+export function sortTasks(
+  tasks: PlannerTask[],
+  sortBy: ColumnSortOption = "manual"
+): PlannerTask[] {
+  if (!sortBy || sortBy === "manual") {
+    return [...tasks];
+  }
+
+  const PRIORITY_ORDER: Record<Priority, number> = {
+    critical: 3,
+    medium: 2,
+    low: 1,
+  };
+
+  return [...tasks].sort((a, b) => {
+    switch (sortBy) {
+      case "priority-desc": {
+        const diff =
+          (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0);
+        if (diff !== 0) return diff;
+        const timeA = parseDateSafe(a.createdAt);
+        const timeB = parseDateSafe(b.createdAt);
+        return timeB - timeA;
+      }
+      case "priority-asc": {
+        const diff =
+          (PRIORITY_ORDER[a.priority] || 0) - (PRIORITY_ORDER[b.priority] || 0);
+        if (diff !== 0) return diff;
+        const timeA = parseDateSafe(a.createdAt);
+        const timeB = parseDateSafe(b.createdAt);
+        return timeB - timeA;
+      }
+      case "date-desc": {
+        const timeA = parseDateSafe(a.createdAt);
+        const timeB = parseDateSafe(b.createdAt);
+        if (timeA !== timeB) return timeB - timeA;
+        return (b.order ?? 0) - (a.order ?? 0);
+      }
+      case "date-asc": {
+        const timeA = parseDateSafe(a.createdAt);
+        const timeB = parseDateSafe(b.createdAt);
+        if (timeA !== timeB) return timeA - timeB;
+        return (a.order ?? 0) - (b.order ?? 0);
+      }
+      case "due-asc": {
+        const timeA = a.dueDate ? parseDateSafe(a.dueDate) : Infinity;
+        const timeB = b.dueDate ? parseDateSafe(b.dueDate) : Infinity;
+        if (timeA !== timeB) return timeA - timeB;
+        return (
+          (PRIORITY_ORDER[b.priority] || 0) - (PRIORITY_ORDER[a.priority] || 0)
+        );
+      }
+      default:
+        return 0;
+    }
+  });
+}
+
