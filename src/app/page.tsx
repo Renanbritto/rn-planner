@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { usePlanner } from "@/lib/planner-store";
 import { LoginView } from "@/components/auth/login-view";
@@ -15,17 +15,16 @@ import { Code2 } from "lucide-react";
 
 export default function PlannerPage() {
   const [activeTab, setActiveTab] = useState<"kanban" | "whiteboard">("kanban");
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  useEffect(() => {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("rn_planner_sidebar_collapsed_v1");
       if (saved !== null) {
-        setIsSidebarCollapsed(saved === "true");
+        return saved === "true";
       }
     }
-  }, []);
+    return false;
+  });
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handleSetSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>> = (value) => {
     setIsSidebarCollapsed((prev) => {

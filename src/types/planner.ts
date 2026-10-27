@@ -319,10 +319,19 @@ export function extractWorkspaceIdFromColumnId(
   fallbackWsId = DEFAULT_WORKSPACE.id
 ): string {
   if (!columnId) return fallbackWsId;
-  const match = columnId.match(/^col-(ws-[a-zA-Z0-9_-]+)/);
+
+  // Formato: col-ws-<wsId>-<colSuffix> (ex: col-ws-mha8xyz-todo -> ws-mha8xyz)
+  const match = columnId.match(/^col-(ws-[a-zA-Z0-9]+)-/);
   if (match && match[1]) {
     return match[1];
   }
+
+  // Se o ID da coluna for exatamente "col-ws-<wsId>"
+  const exactWsMatch = columnId.match(/^col-(ws-[a-zA-Z0-9]+)$/);
+  if (exactWsMatch && exactWsMatch[1]) {
+    return exactWsMatch[1];
+  }
+
   return fallbackWsId;
 }
 

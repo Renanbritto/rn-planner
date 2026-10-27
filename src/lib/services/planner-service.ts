@@ -6,7 +6,6 @@ import {
   Priority,
   TaskCategory,
   extractWorkspaceIdFromColumnId,
-  DEFAULT_WORKSPACE,
 } from "@/types/planner";
 
 export const DEFAULT_COLUMNS: KanbanColumnDef[] = [
@@ -175,7 +174,10 @@ export class PlannerService {
       }
 
       const colToWs = new Map<string, string>();
-      allColumns.forEach((c) => colToWs.set(c.id, c.workspaceId || DEFAULT_WORKSPACE.id));
+      allColumns.forEach((c) => {
+        const wsId = c.workspaceId || extractWorkspaceIdFromColumnId(c.id);
+        colToWs.set(c.id, wsId);
+      });
 
       const formattedTasks: PlannerTask[] = (tasksData || []).map((t) => ({
         id: t.id,
@@ -221,7 +223,11 @@ export class PlannerService {
           } catch (e) {
             console.warn("[PlannerService] Falha ao sincronizar tarefas locais adicionais:", e);
           }
-          allTasks = [...formattedTasks, ...validExtraTasks];
+          const sanitizedExtraTasks = validExtraTasks.map((t) => ({
+            ...t,
+            workspaceId: colToWs.get(t.column) || extractWorkspaceIdFromColumnId(t.column) || t.workspaceId,
+          }));
+          allTasks = [...formattedTasks, ...sanitizedExtraTasks];
         }
       }
 

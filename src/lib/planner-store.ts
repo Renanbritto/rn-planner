@@ -93,11 +93,24 @@ function getStoredLocalColumns(): KanbanColumnDef[] {
       const parsedCols: KanbanColumnDef[] = JSON.parse(storedCols);
       if (Array.isArray(parsedCols) && parsedCols.length > 0) {
         return parsedCols
-          .map((c) => ({
-            ...c,
-            workspaceId: c.workspaceId || DEFAULT_WORKSPACE.id,
-            sortBy: sortsMap[c.id] || c.sortBy || "manual",
-          }))
+          .map((c) => {
+            const rawWs = c.workspaceId;
+            const isCorrupted =
+              rawWs &&
+              (rawWs.includes("-todo") ||
+                rawWs.includes("-in_progress") ||
+                rawWs.includes("-review") ||
+                rawWs.includes("-done"));
+            const cleanWs = isCorrupted
+              ? extractWorkspaceIdFromColumnId(c.id)
+              : c.workspaceId || extractWorkspaceIdFromColumnId(c.id);
+
+            return {
+              ...c,
+              workspaceId: cleanWs || DEFAULT_WORKSPACE.id,
+              sortBy: sortsMap[c.id] || c.sortBy || "manual",
+            };
+          })
           .sort((a, b) => a.order - b.order);
       }
     }
@@ -121,14 +134,22 @@ function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
       const parsedTasks: PlannerTask[] = JSON.parse(storedTasks);
       if (Array.isArray(parsedTasks) && parsedTasks.length > 0) {
         const colToWs = new Map<string, string>();
-        validColumns.forEach((c) => colToWs.set(c.id, c.workspaceId || DEFAULT_WORKSPACE.id));
+        validColumns.forEach((c) => {
+          const wsId = c.workspaceId || extractWorkspaceIdFromColumnId(c.id);
+          colToWs.set(c.id, wsId);
+        });
 
         return parsedTasks.map((t) => {
-          const wsId =
-            t.workspaceId ||
-            colToWs.get(t.column) ||
-            extractWorkspaceIdFromColumnId(t.column) ||
-            DEFAULT_WORKSPACE.id;
+          const wsFromCol = colToWs.get(t.column) || extractWorkspaceIdFromColumnId(t.column);
+          const rawWs = t.workspaceId;
+          const isCorrupted =
+            rawWs &&
+            (rawWs.includes("-todo") ||
+              rawWs.includes("-in_progress") ||
+              rawWs.includes("-review") ||
+              rawWs.includes("-done"));
+
+          const wsId = isCorrupted ? wsFromCol : wsFromCol || rawWs || DEFAULT_WORKSPACE.id;
 
           const wsCols = validColumns.filter(
             (c) => (c.workspaceId || DEFAULT_WORKSPACE.id) === wsId
@@ -261,6 +282,26 @@ export function usePlanner() {
         setTasks(result.tasks);
         setSyncStatus("synced");
         setSyncErrorMessage(null);
+
+        // Auto-descobrir e registrar workspaces que existam nas colunas da nuvem
+        setWorkspaces((prevWs) => {
+          const knownIds = new Set(prevWs.map((w) => w.id));
+          const newWsList: Workspace[] = [];
+          colsWithSort.forEach((col) => {
+            const wsId = col.workspaceId;
+            if (wsId && wsId !== DEFAULT_WORKSPACE.id && !knownIds.has(wsId)) {
+              knownIds.add(wsId);
+              newWsList.push({
+                id: wsId,
+                name: "Novo Workspace",
+                icon: "🚀",
+                color: "cyan",
+                createdAt: new Date().toISOString(),
+              });
+            }
+          });
+          return newWsList.length > 0 ? [...prevWs, ...newWsList] : prevWs;
+        });
       }
     } else {
       // Modo convidado / não logado: busca do LocalStorage
@@ -335,8 +376,10 @@ export function usePlanner() {
 
     // Persistência das colunas do novo workspace no Supabase
     if (user && syncStatus !== "needs_schema") {
-      for (const col of newWsCols) {
-        PlannerService.upsertColumn(user.id, col);
+      try {
+        await Promise.all(newWsCols.map((col) => PlannerService.upsertColumn(user.id, col)));
+      } catch (e) {
+        console.warn("Falha ao salvar colunas do novo workspace no Supabase:", e);
       }
     }
 
@@ -725,10 +768,14 @@ export function usePlanner() {
         // Garante que a coluna correspondente está cadastrada no Supabase antes de criar a tarefa (evita erro de chave estrangeira)
         const targetCol =
           columns.find((c) => c.id === resolvedColumn) ||
-          activeWorkspaceColumns.find((c) => c.id === resolvedColumn);
-        if (targetCol) {
-          await PlannerService.upsertColumn(user.id, targetCol);
-        }
+          activeWorkspaceColumns.find((c) => c.id === resolvedColumn) || {
+            id: resolvedColumn,
+            title: "A Fazer",
+            color: "slate",
+            order: 0,
+            workspaceId: activeWorkspaceId,
+          };
+        await PlannerService.upsertColumn(user.id, targetCol);
 
         const res = await PlannerService.upsertTask(user.id, newTask);
         if (res.tableMissing) {
