@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { KanbanColumnDef, Priority, TaskCategory } from "@/types/planner";
 import {
   Dialog,
@@ -38,29 +38,43 @@ export function NewCardDialog({
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<TaskCategory>("work");
   const [priority, setPriority] = useState<Priority>("medium");
-  const [prevDefaultColumn, setPrevDefaultColumn] = useState(defaultColumn);
-  const [column, setColumn] = useState<string>(
-    defaultColumn || columns[0]?.id || "todo"
-  );
+  const [column, setColumn] = useState<string>(() => {
+    const validColIds = new Set(columns.map((c) => c.id));
+    if (defaultColumn && validColIds.has(defaultColumn)) return defaultColumn;
+    return columns[0]?.id || "todo";
+  });
   const [dueDate, setDueDate] = useState(
     new Date().toISOString().split("T")[0]
   );
 
-  if (defaultColumn !== prevDefaultColumn) {
-    setPrevDefaultColumn(defaultColumn);
-    setColumn(defaultColumn || columns[0]?.id || "todo");
-  }
+  useEffect(() => {
+    if (open) {
+      queueMicrotask(() => {
+        const validColIds = new Set(columns.map((c) => c.id));
+        if (defaultColumn && validColIds.has(defaultColumn)) {
+          setColumn(defaultColumn);
+        } else if (columns[0]?.id) {
+          setColumn(columns[0].id);
+        }
+      });
+    }
+  }, [open, defaultColumn, columns]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+
+    const validColIds = new Set(columns.map((c) => c.id));
+    const finalColumn = validColIds.has(column)
+      ? column
+      : columns[0]?.id || defaultColumn || "todo";
 
     onAddCard({
       title: title.trim(),
       description: description.trim() || undefined,
       category,
       priority,
-      column: column || columns[0]?.id || "todo",
+      column: finalColumn,
       dueDate,
     });
 

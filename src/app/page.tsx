@@ -42,7 +42,6 @@ export default function PlannerPage() {
     // Workspace state
     workspaces,
     activeWorkspace,
-    activeWorkspaceId,
     setActiveWorkspaceId,
     addWorkspace,
     // Column & Task state
@@ -76,7 +75,7 @@ export default function PlannerPage() {
   const [isCardDialogOpen, setIsCardDialogOpen] = useState(false);
   const [isColumnDialogOpen, setIsColumnDialogOpen] = useState(false);
   const [isNewWorkspaceDialogOpen, setIsNewWorkspaceDialogOpen] = useState(false);
-  const [selectedColumn, setSelectedColumn] = useState<string>("todo");
+  const [selectedColumn, setSelectedColumn] = useState<string>("");
 
   const handleQuickAdd = (columnId: string) => {
     setSelectedColumn(columnId);
@@ -84,7 +83,7 @@ export default function PlannerPage() {
   };
 
   const handleOpenGeneralAdd = () => {
-    setSelectedColumn(columns[0]?.id || "todo");
+    setSelectedColumn(columns[0]?.id || "");
     setIsCardDialogOpen(true);
   };
 

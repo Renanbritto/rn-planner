@@ -5,6 +5,8 @@ import {
   ColumnColor,
   Priority,
   TaskCategory,
+  extractWorkspaceIdFromColumnId,
+  DEFAULT_WORKSPACE,
 } from "@/types/planner";
 
 export const DEFAULT_COLUMNS: KanbanColumnDef[] = [
@@ -145,7 +147,35 @@ export class PlannerService {
         title: c.title,
         color: c.color as ColumnColor,
         order: c.order,
+        workspaceId: extractWorkspaceIdFromColumnId(c.id),
       }));
+
+      // Detectar se há colunas locais (criadas em novos workspaces) que ainda não estão no Supabase
+      const existingColIds = new Set(formattedColumns.map((c) => c.id));
+      const extraCols = (initialCols || []).filter((c) => !existingColIds.has(c.id));
+
+      let allColumns = formattedColumns;
+      if (extraCols.length > 0) {
+        try {
+          await supabase.from("columns").upsert(
+            extraCols.map((c, idx) => ({
+              id: c.id,
+              user_id: userId,
+              title: c.title,
+              color: c.color,
+              order: c.order ?? (colsData.length + idx),
+              updated_at: new Date().toISOString(),
+            })),
+            { onConflict: "id,user_id" }
+          );
+        } catch (e) {
+          console.warn("[PlannerService] Falha ao sincronizar colunas locais adicionais:", e);
+        }
+        allColumns = [...formattedColumns, ...extraCols];
+      }
+
+      const colToWs = new Map<string, string>();
+      allColumns.forEach((c) => colToWs.set(c.id, c.workspaceId || DEFAULT_WORKSPACE.id));
 
       const formattedTasks: PlannerTask[] = (tasksData || []).map((t) => ({
         id: t.id,
@@ -158,11 +188,46 @@ export class PlannerService {
         dueDate: t.due_date,
         createdAt: t.created_at,
         order: t.order,
+        workspaceId: colToWs.get(t.column_id) || extractWorkspaceIdFromColumnId(t.column_id),
       }));
 
+      // Detectar se há tarefas locais (ex: recém criadas em um workspace) que ainda não foram para o Supabase
+      const existingTaskIds = new Set(formattedTasks.map((t) => t.id));
+      const extraTasks = (initialTasks || []).filter((t) => !existingTaskIds.has(t.id));
+
+      let allTasks = formattedTasks;
+      if (extraTasks.length > 0) {
+        const validColIds = new Set(allColumns.map((c) => c.id));
+        const validExtraTasks = extraTasks.filter((t) => validColIds.has(t.column));
+        if (validExtraTasks.length > 0) {
+          try {
+            await supabase.from("tasks").upsert(
+              validExtraTasks.map((t) => ({
+                id: t.id,
+                user_id: userId,
+                column_id: t.column,
+                code: t.code,
+                title: t.title,
+                description: t.description || null,
+                category: t.category,
+                priority: t.priority,
+                due_date: t.dueDate,
+                order: t.order,
+                created_at: t.createdAt,
+                updated_at: new Date().toISOString(),
+              })),
+              { onConflict: "id,user_id" }
+            );
+          } catch (e) {
+            console.warn("[PlannerService] Falha ao sincronizar tarefas locais adicionais:", e);
+          }
+          allTasks = [...formattedTasks, ...validExtraTasks];
+        }
+      }
+
       return {
-        columns: formattedColumns,
-        tasks: formattedTasks,
+        columns: allColumns,
+        tasks: allTasks,
       };
     } catch (err: unknown) {
       console.error("[PlannerService.fetchUserBoard] Falha:", err);
@@ -201,7 +266,10 @@ export class PlannerService {
         throw colErr;
       }
 
-      const taskRows = initialTasks.map((t) => ({
+      const validColIds = new Set(initialCols.map((c) => c.id));
+      const validTasks = initialTasks.filter((t) => validColIds.has(t.column));
+
+      const taskRows = validTasks.map((t) => ({
         id: t.id,
         user_id: userId,
         column_id: t.column,

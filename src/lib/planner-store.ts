@@ -10,6 +10,7 @@ import {
   TaskCategory,
   Workspace,
   DEFAULT_WORKSPACE,
+  extractWorkspaceIdFromColumnId,
 } from "@/types/planner";
 import { useAuth } from "./auth-context";
 import {
@@ -119,13 +120,28 @@ function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
     if (storedTasks) {
       const parsedTasks: PlannerTask[] = JSON.parse(storedTasks);
       if (Array.isArray(parsedTasks) && parsedTasks.length > 0) {
-        const validColIds = new Set(validColumns.map((c) => c.id));
-        const firstColId = validColumns[0]?.id || "todo";
-        return parsedTasks.map((t) => ({
-          ...t,
-          workspaceId: t.workspaceId || DEFAULT_WORKSPACE.id,
-          column: validColIds.has(t.column) ? t.column : firstColId,
-        }));
+        const colToWs = new Map<string, string>();
+        validColumns.forEach((c) => colToWs.set(c.id, c.workspaceId || DEFAULT_WORKSPACE.id));
+
+        return parsedTasks.map((t) => {
+          const wsId =
+            t.workspaceId ||
+            colToWs.get(t.column) ||
+            extractWorkspaceIdFromColumnId(t.column) ||
+            DEFAULT_WORKSPACE.id;
+
+          const wsCols = validColumns.filter(
+            (c) => (c.workspaceId || DEFAULT_WORKSPACE.id) === wsId
+          );
+          const wsColIds = new Set(wsCols.map((c) => c.id));
+          const fallbackColId = wsCols[0]?.id || `col-${wsId}-todo`;
+
+          return {
+            ...t,
+            workspaceId: wsId,
+            column: wsColIds.has(t.column) ? t.column : fallbackColId,
+          };
+        });
       }
     }
   } catch (e) {
@@ -139,8 +155,10 @@ export function usePlanner() {
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>(getStoredLocalWorkspaces);
   const [activeWorkspaceId, setActiveWorkspaceIdState] = useState<string>(getStoredActiveWorkspaceId);
-  const [columns, setColumns] = useState<KanbanColumnDef[]>(DEFAULT_COLUMNS);
-  const [tasks, setTasks] = useState<PlannerTask[]>(INITIAL_TASKS);
+  const [columns, setColumns] = useState<KanbanColumnDef[]>(getStoredLocalColumns);
+  const [tasks, setTasks] = useState<PlannerTask[]>(() =>
+    getStoredLocalTasks(getStoredLocalColumns())
+  );
   const [isLoaded, setIsLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("local");
   const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
@@ -175,15 +193,22 @@ export function usePlanner() {
       (c) => (c.workspaceId || DEFAULT_WORKSPACE.id) === activeWorkspaceId
     );
     if (!hasCols) {
-      const generatedCols: KanbanColumnDef[] = DEFAULT_COLUMNS.map((col, idx) => ({
-        ...col,
-        id: `col-${activeWorkspaceId}-${col.id}`,
-        workspaceId: activeWorkspaceId,
-        order: idx,
-      }));
-      setColumns((prev) => [...prev, ...generatedCols]);
+      queueMicrotask(() => {
+        const generatedCols: KanbanColumnDef[] = DEFAULT_COLUMNS.map((col, idx) => ({
+          ...col,
+          id: `col-${activeWorkspaceId}-${col.id}`,
+          workspaceId: activeWorkspaceId,
+          order: idx,
+        }));
+        setColumns((prev) => [...prev, ...generatedCols]);
+        if (user && syncStatus !== "needs_schema") {
+          for (const col of generatedCols) {
+            PlannerService.upsertColumn(user.id, col);
+          }
+        }
+      });
     }
-  }, [activeWorkspaceId, isLoaded, columns]);
+  }, [activeWorkspaceId, isLoaded, columns, user, syncStatus]);
 
   // Tarefas do Workspace Ativo
   const activeWorkspaceTasks = tasks.filter(
@@ -308,6 +333,13 @@ export function usePlanner() {
     setColumns((prev) => [...prev, ...newWsCols]);
     setActiveWorkspaceId(newWsId);
 
+    // Persistência das colunas do novo workspace no Supabase
+    if (user && syncStatus !== "needs_schema") {
+      for (const col of newWsCols) {
+        PlannerService.upsertColumn(user.id, col);
+      }
+    }
+
     toast.success(`Workspace "${cleanName}" criado!`);
     return newWs;
   };
@@ -351,39 +383,42 @@ export function usePlanner() {
   // -------------------------------------------------------------
 
   // Adicionar nova etapa no workspace ativo
-  const addColumn = async (title: string, color: ColumnColor = "cyan") => {
-    const cleanTitle = sanitizeString(title, 40);
-    if (!cleanTitle) return null;
+  const addColumn = useCallback(
+    async (title: string, color: ColumnColor = "cyan") => {
+      const cleanTitle = sanitizeString(title, 40);
+      if (!cleanTitle) return null;
 
-    const newId = `col-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
-    const newCol: KanbanColumnDef = {
-      id: newId,
-      title: cleanTitle,
-      color,
-      order: activeWorkspaceColumns.length,
-      workspaceId: activeWorkspaceId,
-    };
+      const newId = `col-${activeWorkspaceId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+      const newCol: KanbanColumnDef = {
+        id: newId,
+        title: cleanTitle,
+        color,
+        order: activeWorkspaceColumns.length,
+        workspaceId: activeWorkspaceId,
+      };
 
-    // Atualização otimista imediata na UI
-    setColumns((prev) => [...prev, newCol]);
+      // Atualização otimista imediata na UI
+      setColumns((prev) => [...prev, newCol]);
 
-    // Persistência na nuvem se autenticado
-    if (user && syncStatus !== "needs_schema") {
-      setSyncStatus("syncing");
-      const res = await PlannerService.upsertColumn(user.id, newCol);
-      if (res.tableMissing) {
-        setSyncStatus("needs_schema");
-      } else if (!res.success) {
-        toast.error("Falha ao salvar coluna no Supabase");
-        setSyncStatus("error");
-      } else {
-        setSyncStatus("synced");
+      // Persistência na nuvem se autenticado
+      if (user && syncStatus !== "needs_schema") {
+        setSyncStatus("syncing");
+        const res = await PlannerService.upsertColumn(user.id, newCol);
+        if (res.tableMissing) {
+          setSyncStatus("needs_schema");
+        } else if (!res.success) {
+          toast.error("Falha ao salvar coluna no Supabase");
+          setSyncStatus("error");
+        } else {
+          setSyncStatus("synced");
+        }
       }
-    }
 
-    toast.success(`Etapa "${cleanTitle}" criada`);
-    return newCol;
-  };
+      toast.success(`Etapa "${cleanTitle}" criada`);
+      return newCol;
+    },
+    [activeWorkspaceId, activeWorkspaceColumns.length, user, syncStatus]
+  );
 
   // Editar etapa (nome, cor e/ou ordenação de cards)
   const updateColumn = async (
@@ -654,45 +689,62 @@ export function usePlanner() {
   };
 
   // Adicionar nova tarefa no workspace ativo
-  const addTask = async (data: {
-    title: string;
-    description?: string;
-    category: TaskCategory;
-    priority: Priority;
-    column: string;
-    dueDate: string;
-  }) => {
-    const nextNumber = tasks.length + 101;
-    const newTask: PlannerTask = {
-      ...data,
-      workspaceId: activeWorkspaceId,
-      title: sanitizeString(data.title, 120),
-      description: data.description ? sanitizeDescription(data.description) : undefined,
-      id: "t-" + Date.now(),
-      code: `RN-${nextNumber}`,
-      createdAt: new Date().toISOString(),
-      order: activeWorkspaceTasks.filter((t) => t.column === data.column).length,
-    };
+  const addTask = useCallback(
+    async (data: {
+      title: string;
+      description?: string;
+      category: TaskCategory;
+      priority: Priority;
+      column: string;
+      dueDate: string;
+    }) => {
+      const nextNumber = tasks.length + 101;
+      const validColIds = new Set(activeWorkspaceColumns.map((c) => c.id));
+      const resolvedColumn = validColIds.has(data.column)
+        ? data.column
+        : activeWorkspaceColumns[0]?.id || `col-${activeWorkspaceId}-todo`;
 
-    // Otimista
-    setTasks((prev) => [newTask, ...prev]);
+      const newTask: PlannerTask = {
+        ...data,
+        column: resolvedColumn,
+        workspaceId: activeWorkspaceId,
+        title: sanitizeString(data.title, 120),
+        description: data.description ? sanitizeDescription(data.description) : undefined,
+        id: "t-" + Date.now(),
+        code: `RN-${nextNumber}`,
+        createdAt: new Date().toISOString(),
+        order: activeWorkspaceTasks.filter((t) => t.column === resolvedColumn).length,
+      };
 
-    // Supabase
-    if (user && syncStatus !== "needs_schema") {
-      setSyncStatus("syncing");
-      const res = await PlannerService.upsertTask(user.id, newTask);
-      if (res.tableMissing) {
-        setSyncStatus("needs_schema");
-      } else if (!res.success) {
-        toast.error("Erro ao salvar tarefa no Supabase");
-        setSyncStatus("error");
-      } else {
-        setSyncStatus("synced");
+      // Otimista
+      setTasks((prev) => [newTask, ...prev]);
+
+      // Supabase
+      if (user && syncStatus !== "needs_schema") {
+        setSyncStatus("syncing");
+        // Garante que a coluna correspondente está cadastrada no Supabase antes de criar a tarefa (evita erro de chave estrangeira)
+        const targetCol =
+          columns.find((c) => c.id === resolvedColumn) ||
+          activeWorkspaceColumns.find((c) => c.id === resolvedColumn);
+        if (targetCol) {
+          await PlannerService.upsertColumn(user.id, targetCol);
+        }
+
+        const res = await PlannerService.upsertTask(user.id, newTask);
+        if (res.tableMissing) {
+          setSyncStatus("needs_schema");
+        } else if (!res.success) {
+          toast.error("Erro ao salvar tarefa no Supabase");
+          setSyncStatus("error");
+        } else {
+          setSyncStatus("synced");
+        }
       }
-    }
 
-    toast.success(`Card ${newTask.code} criado!`);
-  };
+      toast.success(`Card ${newTask.code} criado!`);
+    },
+    [tasks.length, activeWorkspaceColumns, activeWorkspaceId, activeWorkspaceTasks, columns, user, syncStatus]
+  );
 
   // Excluir tarefa
   const deleteTask = async (id: string) => {

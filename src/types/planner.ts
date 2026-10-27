@@ -314,3 +314,15 @@ export function sortTasks(
   });
 }
 
+export function extractWorkspaceIdFromColumnId(
+  columnId: string,
+  fallbackWsId = DEFAULT_WORKSPACE.id
+): string {
+  if (!columnId) return fallbackWsId;
+  const match = columnId.match(/^col-(ws-[a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  return fallbackWsId;
+}
+
