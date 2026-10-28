@@ -6,6 +6,8 @@ import {
   Priority,
   TaskCategory,
   extractWorkspaceIdFromColumnId,
+  extractTaskMetadata,
+  injectTaskMetadata,
 } from "@/types/planner";
 
 export const DEFAULT_COLUMNS: KanbanColumnDef[] = [
@@ -121,19 +123,25 @@ export class PlannerService {
         colToWs.set(c.id, wsId);
       });
 
-      const formattedTasks: PlannerTask[] = (tasksData || []).map((t) => ({
-        id: t.id,
-        code: t.code,
-        title: t.title,
-        description: t.description || undefined,
-        category: t.category as TaskCategory,
-        priority: t.priority as Priority,
-        column: t.column_id,
-        dueDate: t.due_date,
-        createdAt: t.created_at,
-        order: t.order,
-        workspaceId: colToWs.get(t.column_id) || extractWorkspaceIdFromColumnId(t.column_id),
-      }));
+      const formattedTasks: PlannerTask[] = (tasksData || []).map((t) => {
+        const meta = extractTaskMetadata(t.description);
+        return {
+          id: t.id,
+          code: t.code,
+          title: t.title,
+          description: meta.cleanDescription || undefined,
+          category: t.category as TaskCategory,
+          priority: t.priority as Priority,
+          column: t.column_id,
+          dueDate: t.due_date,
+          createdAt: t.created_at,
+          order: t.order,
+          workspaceId: colToWs.get(t.column_id) || extractWorkspaceIdFromColumnId(t.column_id),
+          statusBadgeId: meta.statusBadgeId,
+          comments: meta.comments,
+          assignee: meta.assignee || (t as any).assignee || undefined,
+        };
+      });
 
       // Detectar se há tarefas locais (ex: recém criadas em um workspace) que ainda não foram para o Supabase
       // Ignora tarefas mock/demo legadas (t-1 a t-5) para manter contas novas zeradas
@@ -155,7 +163,12 @@ export class PlannerService {
                 column_id: t.column,
                 code: t.code,
                 title: t.title,
-                description: t.description || null,
+                description:
+                  injectTaskMetadata(t.description, {
+                    statusBadgeId: t.statusBadgeId,
+                    comments: t.comments,
+                    assignee: t.assignee,
+                  }) || null,
                 category: t.category,
                 priority: t.priority,
                 due_date: t.dueDate,
@@ -226,7 +239,12 @@ export class PlannerService {
         column_id: t.column,
         code: t.code,
         title: t.title,
-        description: t.description || null,
+        description:
+          injectTaskMetadata(t.description, {
+            statusBadgeId: t.statusBadgeId,
+            comments: t.comments,
+            assignee: t.assignee,
+          }) || null,
         category: t.category,
         priority: t.priority,
         due_date: t.dueDate,
@@ -253,6 +271,12 @@ export class PlannerService {
    */
   static async upsertTask(userId: string, task: PlannerTask): Promise<CloudSyncResult> {
     try {
+      const fullDescription = injectTaskMetadata(task.description, {
+        statusBadgeId: task.statusBadgeId,
+        comments: task.comments,
+        assignee: task.assignee,
+      });
+
       const { error } = await supabase.from("tasks").upsert(
         {
           id: task.id,
@@ -260,7 +284,7 @@ export class PlannerService {
           column_id: task.column,
           code: task.code,
           title: task.title,
-          description: task.description || null,
+          description: fullDescription || null,
           category: task.category,
           priority: task.priority,
           due_date: task.dueDate,

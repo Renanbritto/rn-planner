@@ -6,6 +6,8 @@ import {
   PlannerTask,
   ColumnColor,
   ColumnSortOption,
+  StatusBadge,
+  formatCardCode,
 } from "@/types/planner";
 import { KanbanColumn } from "./kanban-column";
 import { ColumnActionsDialog } from "./column-actions-dialog";
@@ -17,6 +19,9 @@ import { Plus, X } from "lucide-react";
 interface KanbanBoardProps {
   columns: KanbanColumnDef[];
   tasks: PlannerTask[];
+  statusBadges?: StatusBadge[];
+  onAddStatusBadge?: (label: string, color: string) => StatusBadge;
+  onDeleteStatusBadge?: (id: string) => void;
   onMoveTask: (taskId: string, targetColumn: string) => void;
   onDeleteTask: (id: string) => void;
   onQuickAdd: (columnId: string) => void;
@@ -34,6 +39,9 @@ interface KanbanBoardProps {
 export function KanbanBoard({
   columns,
   tasks,
+  statusBadges = [],
+  onAddStatusBadge,
+  onDeleteStatusBadge,
   onMoveTask,
   onDeleteTask,
   onQuickAdd,
@@ -85,6 +93,7 @@ export function KanbanBoard({
               column={col}
               tasks={columnTasks}
               allColumns={columns}
+              statusBadges={statusBadges}
               isFirst={index === 0}
               isLast={index === columns.length - 1}
               totalColumns={columns.length}
@@ -138,7 +147,7 @@ export function KanbanBoard({
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
             <span className="font-mono font-extrabold text-xs text-cyan-400">
-              {selectedTaskToMove.code}
+              {formatCardCode(selectedTaskToMove.code)}
             </span>
             <span className="font-comfortaa text-xs font-medium text-slate-200 hidden sm:inline truncate max-w-[180px]">
               {selectedTaskToMove.title}
@@ -165,6 +174,9 @@ export function KanbanBoard({
         onOpenChange={(open) => !open && setSelectedTask(null)}
         task={activeTask}
         columns={columns}
+        statusBadges={statusBadges}
+        onAddStatusBadge={onAddStatusBadge}
+        onDeleteStatusBadge={onDeleteStatusBadge}
         onUpdateTask={onUpdateTask}
         onDeleteTask={onDeleteTask}
       />

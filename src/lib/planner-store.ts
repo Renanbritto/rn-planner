@@ -11,12 +11,16 @@ import {
   Workspace,
   DEFAULT_WORKSPACE,
   extractWorkspaceIdFromColumnId,
+  StatusBadge,
+  DEFAULT_STATUS_BADGES,
+  CardComment,
+  extractTaskMetadata,
+  formatCardCode,
 } from "@/types/planner";
 import { useAuth } from "./auth-context";
 import {
   PlannerService,
   DEFAULT_COLUMNS,
-  INITIAL_TASKS,
   DEMO_TASK_IDS,
 } from "./services/planner-service";
 import { toast } from "sonner";
@@ -125,6 +129,22 @@ function getStoredLocalColumns(): KanbanColumnDef[] {
   }));
 }
 
+function getStoredLocalStatusBadges(): StatusBadge[] {
+  if (typeof window === "undefined") return DEFAULT_STATUS_BADGES;
+  try {
+    const stored = localStorage.getItem("rn_planner_status_badges");
+    if (stored) {
+      const parsed: StatusBadge[] = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn("Erro ao carregar selos do LocalStorage", e);
+  }
+  return DEFAULT_STATUS_BADGES;
+}
+
 function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
   if (typeof window === "undefined") {
     return [];
@@ -161,8 +181,19 @@ function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
             const wsColIds = new Set(wsCols.map((c) => c.id));
             const fallbackColId = wsCols[0]?.id || `col-${wsId}-todo`;
 
+            const meta = extractTaskMetadata(t.description);
+            const comments = t.comments ?? meta.comments ?? [];
+            const statusBadgeId = t.statusBadgeId ?? meta.statusBadgeId;
+            const assignee = t.assignee ?? meta.assignee;
+            const cleanDesc =
+              meta.cleanDescription !== undefined ? meta.cleanDescription : t.description;
+
             return {
               ...t,
+              description: cleanDesc,
+              statusBadgeId,
+              comments,
+              assignee,
               workspaceId: wsId,
               column: wsColIds.has(t.column) ? t.column : fallbackColId,
             };
@@ -185,6 +216,7 @@ export function usePlanner() {
   const [tasks, setTasks] = useState<PlannerTask[]>(() =>
     getStoredLocalTasks(getStoredLocalColumns())
   );
+  const [statusBadges, setStatusBadges] = useState<StatusBadge[]>(getStoredLocalStatusBadges);
   const [isLoaded, setIsLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("local");
   const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
@@ -340,10 +372,11 @@ export function usePlanner() {
       localStorage.setItem("rn_planner_active_workspace_id", activeWorkspaceId);
       localStorage.setItem("rn_planner_board_columns", JSON.stringify(columns));
       localStorage.setItem("rn_planner_board_tasks", JSON.stringify(tasks));
+      localStorage.setItem("rn_planner_status_badges", JSON.stringify(statusBadges));
     } catch (e) {
       console.warn("Erro ao salvar cache local", e);
     }
-  }, [workspaces, activeWorkspaceId, columns, tasks, isLoaded]);
+  }, [workspaces, activeWorkspaceId, columns, tasks, statusBadges, isLoaded]);
 
   // -------------------------------------------------------------
   // MÉTODOS DE WORKSPACE
@@ -740,6 +773,44 @@ export function usePlanner() {
     }
   };
 
+  // -------------------------------------------------------------
+  // MÉTODOS DE SELOS DE STATUS PERSONALIZADOS
+  // -------------------------------------------------------------
+  const addStatusBadge = (label: string, color: string): StatusBadge => {
+    const cleanLabel = sanitizeString(label, 30);
+    const newBadge: StatusBadge = {
+      id: `badge-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      label: cleanLabel || "Novo Selo",
+      color: color || "cyan",
+      createdAt: new Date().toISOString(),
+    };
+    setStatusBadges((prev) => [...prev, newBadge]);
+    toast.success(`Selo "${newBadge.label}" criado!`);
+    return newBadge;
+  };
+
+  const updateStatusBadge = (id: string, updates: Partial<StatusBadge>) => {
+    setStatusBadges((prev) =>
+      prev.map((b) => {
+        if (b.id !== id) return b;
+        return {
+          ...b,
+          ...updates,
+          label: updates.label !== undefined ? sanitizeString(updates.label, 30) : b.label,
+        };
+      })
+    );
+    toast.success("Selo atualizado!");
+  };
+
+  const deleteStatusBadge = (id: string) => {
+    setStatusBadges((prev) => prev.filter((b) => b.id !== id));
+    setTasks((prev) =>
+      prev.map((t) => (t.statusBadgeId === id ? { ...t, statusBadgeId: undefined } : t))
+    );
+    toast.success("Selo removido!");
+  };
+
   // Adicionar nova tarefa no workspace ativo
   const addTask = useCallback(
     async (data: {
@@ -749,6 +820,9 @@ export function usePlanner() {
       priority: Priority;
       column: string;
       dueDate: string;
+      statusBadgeId?: string;
+      comments?: CardComment[];
+      assignee?: string;
     }) => {
       const nextNumber = tasks.length + 101;
       const validColIds = new Set(activeWorkspaceColumns.map((c) => c.id));
@@ -762,8 +836,11 @@ export function usePlanner() {
         workspaceId: activeWorkspaceId,
         title: sanitizeString(data.title, 120),
         description: data.description ? sanitizeDescription(data.description) : undefined,
+        statusBadgeId: data.statusBadgeId || undefined,
+        comments: data.comments || [],
+        assignee: data.assignee ? sanitizeString(data.assignee, 60) : undefined,
         id: "t-" + Date.now(),
-        code: `RN-${nextNumber}`,
+        code: `Task-${nextNumber}`,
         createdAt: new Date().toISOString(),
         order: activeWorkspaceTasks.filter((t) => t.column === resolvedColumn).length,
       };
@@ -797,7 +874,7 @@ export function usePlanner() {
         }
       }
 
-      toast.success(`Card ${newTask.code} criado!`);
+      toast.success(`Card ${formatCardCode(newTask.code)} criado!`);
     },
     [tasks.length, activeWorkspaceColumns, activeWorkspaceId, activeWorkspaceTasks, columns, user, syncStatus]
   );
@@ -820,7 +897,7 @@ export function usePlanner() {
       }
     }
 
-    toast.success(taskToDelete ? `Card ${taskToDelete.code} removido` : "Card removido");
+    toast.success(taskToDelete ? `Card ${formatCardCode(taskToDelete.code)} removido` : "Card removido");
   };
 
   // Atualizar tarefa
@@ -830,7 +907,7 @@ export function usePlanner() {
     setTasks((prev) =>
       prev.map((t) => {
         if (t.id !== id) return t;
-        const updated = {
+        const updated: PlannerTask = {
           ...t,
           ...updates,
           title: updates.title !== undefined ? sanitizeString(updates.title, 120) : t.title,
@@ -840,6 +917,16 @@ export function usePlanner() {
                 ? sanitizeDescription(updates.description)
                 : undefined
               : t.description,
+          statusBadgeId:
+            updates.statusBadgeId !== undefined ? updates.statusBadgeId : t.statusBadgeId,
+          comments:
+            updates.comments !== undefined ? updates.comments : t.comments,
+          assignee:
+            updates.assignee !== undefined
+              ? updates.assignee
+                ? sanitizeString(updates.assignee, 60)
+                : undefined
+              : t.assignee,
         };
         updatedTargetTask = updated;
         return updated;
@@ -886,6 +973,8 @@ export function usePlanner() {
       !q ||
       task.title.toLowerCase().includes(q) ||
       task.code.toLowerCase().includes(q) ||
+      formatCardCode(task.code).toLowerCase().includes(q) ||
+      (task.assignee && task.assignee.toLowerCase().includes(q)) ||
       (task.description && task.description.toLowerCase().includes(q));
 
     const matchesCategory =
@@ -934,6 +1023,11 @@ export function usePlanner() {
     addTask,
     deleteTask,
     updateTask,
+    // Status Badges
+    statusBadges,
+    addStatusBadge,
+    updateStatusBadge,
+    deleteStatusBadge,
     // Sync operations
     syncLocalToCloud,
     refreshData: loadData,

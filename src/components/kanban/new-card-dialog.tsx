@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { KanbanColumnDef, Priority, TaskCategory } from "@/types/planner";
+import {
+  KanbanColumnDef,
+  Priority,
+  TaskCategory,
+  StatusBadge,
+  DEFAULT_STATUS_BADGES,
+  getStatusBadgeColorConfig,
+} from "@/types/planner";
 import {
   Dialog,
   DialogContent,
@@ -11,12 +18,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { RichDescriptionEditor } from "./rich-description";
+import { Tag, Check, User, X } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 interface NewCardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   columns: KanbanColumnDef[];
   defaultColumn?: string;
+  statusBadges?: StatusBadge[];
   onAddCard: (data: {
     title: string;
     description?: string;
@@ -24,6 +34,8 @@ interface NewCardDialogProps {
     priority: Priority;
     column: string;
     dueDate: string;
+    statusBadgeId?: string;
+    assignee?: string;
   }) => void;
 }
 
@@ -32,12 +44,16 @@ export function NewCardDialog({
   onOpenChange,
   columns,
   defaultColumn,
+  statusBadges = DEFAULT_STATUS_BADGES,
   onAddCard,
 }: NewCardDialogProps) {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<TaskCategory>("work");
   const [priority, setPriority] = useState<Priority>("medium");
+  const [statusBadgeId, setStatusBadgeId] = useState<string | undefined>(undefined);
+  const [assignee, setAssignee] = useState("");
   const [column, setColumn] = useState<string>(() => {
     const validColIds = new Set(columns.map((c) => c.id));
     if (defaultColumn && validColIds.has(defaultColumn)) return defaultColumn;
@@ -76,10 +92,14 @@ export function NewCardDialog({
       priority,
       column: finalColumn,
       dueDate,
+      statusBadgeId,
+      assignee: assignee.trim() || undefined,
     });
 
     setTitle("");
     setDescription("");
+    setStatusBadgeId(undefined);
+    setAssignee("");
     onOpenChange(false);
   };
 
@@ -117,6 +137,47 @@ export function NewCardDialog({
               onChange={setDescription}
               placeholder="Detalhes técnicos, checklists, ou cole/arraste imagens (Ctrl+V)..."
             />
+          </div>
+
+          {/* Selo de Status (Opcional) */}
+          <div className="flex flex-col gap-1.5">
+            <label className="font-comfortaa text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-cyan-500" />
+              <span>Selo de Status (Opcional)</span>
+            </label>
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <button
+                type="button"
+                onClick={() => setStatusBadgeId(undefined)}
+                className={`px-2.5 py-1 rounded-full text-xs font-comfortaa border transition-all cursor-pointer ${
+                  !statusBadgeId
+                    ? "bg-slate-800 text-white dark:bg-white/15 dark:text-white border-slate-700 dark:border-white/25 font-bold shadow-xs"
+                    : "text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-slate-50 dark:bg-[#090d16]"
+                }`}
+              >
+                Sem selo
+              </button>
+              {statusBadges.map((badge) => {
+                const isSelected = statusBadgeId === badge.id;
+                const colorConfig = getStatusBadgeColorConfig(badge.color);
+                return (
+                  <button
+                    key={badge.id}
+                    type="button"
+                    onClick={() => setStatusBadgeId(isSelected ? undefined : badge.id)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-comfortaa transition-all cursor-pointer ${
+                      isSelected
+                        ? `${colorConfig.badgeBg} ${colorConfig.badgeText} ${colorConfig.borderColor} ring-2 ring-cyan-500/50 font-bold shadow-sm scale-105`
+                        : `${colorConfig.badgeBg} ${colorConfig.badgeText} ${colorConfig.borderColor} opacity-60 hover:opacity-100`
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${colorConfig.dotColor}`} />
+                    <span>{badge.label}</span>
+                    {isSelected && <Check className="h-3 w-3 ml-0.5" />}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -185,6 +246,45 @@ export function NewCardDialog({
                 onChange={(e) => setDueDate(e.target.value)}
                 className="bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl font-mono"
               />
+            </div>
+          </div>
+
+          {/* Responsável da Tarefa (Opcional) */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className="font-comfortaa text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-cyan-500" />
+                <span>Responsável da Tarefa (Opcional)</span>
+              </label>
+              {user?.name && assignee !== user.name && (
+                <button
+                  type="button"
+                  onClick={() => setAssignee(user.name || "")}
+                  className="text-[11px] font-comfortaa font-semibold text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors cursor-pointer"
+                >
+                  Atribuir a mim ({user.name})
+                </button>
+              )}
+            </div>
+            <div className="relative flex items-center">
+              <User className="absolute left-3 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              <Input
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                placeholder="Ex: Renan Britto, Ana Silva..."
+                maxLength={60}
+                className="bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl font-comfortaa h-9 pl-9 pr-8"
+              />
+              {assignee && (
+                <button
+                  type="button"
+                  onClick={() => setAssignee("")}
+                  className="absolute right-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer"
+                  title="Limpar"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           </div>
 

@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { PlannerTask, TaskCategory, KanbanColumnDef, getColumnColorConfig } from "@/types/planner";
+import {
+  PlannerTask,
+  TaskCategory,
+  KanbanColumnDef,
+  getColumnColorConfig,
+  StatusBadge,
+  DEFAULT_STATUS_BADGES,
+  getStatusBadgeColorConfig,
+  formatCardCode,
+} from "@/types/planner";
 import {
   Calendar,
   Trash2,
@@ -11,6 +20,8 @@ import {
   ArrowRightLeft,
   X,
   Check,
+  MessageSquare,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 import { extractImagesFromMarkdown, getCleanSnippet } from "./rich-description";
@@ -25,6 +36,7 @@ import {
 interface KanbanCardProps {
   task: PlannerTask;
   columns?: KanbanColumnDef[];
+  statusBadges?: StatusBadge[];
   isDragging?: boolean;
   isSelectedToMove?: boolean;
   onDelete: (id: string) => void;
@@ -46,6 +58,7 @@ const CATEGORY_MAP: Record<TaskCategory, { label: string; bg: string; text: stri
 export function KanbanCard({
   task,
   columns = [],
+  statusBadges = [],
   isDragging = false,
   isSelectedToMove = false,
   onDelete,
@@ -58,6 +71,13 @@ export function KanbanCard({
   const [isLocalDragging, setIsLocalDragging] = useState(false);
   const didDragRef = useRef(false);
   const categoryInfo = CATEGORY_MAP[task.category] || CATEGORY_MAP.work;
+
+  const statusBadge = task.statusBadgeId
+    ? (statusBadges.length > 0 ? statusBadges : DEFAULT_STATUS_BADGES).find(
+        (b) => b.id === task.statusBadgeId
+      )
+    : null;
+  const badgeConfig = statusBadge ? getStatusBadgeColorConfig(statusBadge.color) : null;
 
   const attachedImages = task.description ? extractImagesFromMarkdown(task.description) : [];
   const cleanDescription = task.description ? getCleanSnippet(task.description) : "";
@@ -151,7 +171,7 @@ export function KanbanCard({
           </button>
 
           <span className="font-mono font-extrabold text-[11px] text-slate-500 dark:text-slate-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-            {task.code}
+            {formatCardCode(task.code)}
           </span>
 
           {/* Botão Rápido de Mover para Outra Etapa */}
@@ -184,7 +204,7 @@ export function KanbanCard({
                       disabled={isCurrent}
                       onClick={() => {
                         onMoveToColumn?.(task.id, col.id);
-                        toast.success(`Card ${task.code} movido para "${col.title}"!`);
+                        toast.success(`Card ${formatCardCode(task.code)} movido para "${col.title}"!`);
                       }}
                       className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl cursor-pointer font-comfortaa text-xs transition-colors ${
                         isCurrent
@@ -265,6 +285,20 @@ export function KanbanCard({
         </div>
       </div>
 
+      {/* Selo de Status Personalizável */}
+      {statusBadge && badgeConfig && (
+        <div className="mt-1 mb-1.5 flex items-center">
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-comfortaa font-bold uppercase tracking-wider ${badgeConfig.badgeBg} ${badgeConfig.badgeText} ${badgeConfig.borderColor} shadow-xs`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${badgeConfig.dotColor} shadow-[0_0_6px_currentColor]`}
+            />
+            <span>{statusBadge.label}</span>
+          </span>
+        </div>
+      )}
+
       {/* Título Principal com Tipografia Comfortaa */}
       <h3 className="font-comfortaa text-sm font-semibold leading-snug text-slate-800 dark:text-slate-100 group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors">
         {task.title}
@@ -277,15 +311,53 @@ export function KanbanCard({
         </p>
       )}
 
-      {/* Rodapé do Card: Categoria, Imagens & Data */}
-      <div className="mt-3 flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-2 text-[11px]">
-        <span
-          className={`font-comfortaa rounded-lg border px-2 py-0.5 font-medium ${categoryInfo.bg} ${categoryInfo.text}`}
-        >
-          {categoryInfo.label}
-        </span>
+      {/* Rodapé do Card: Categoria, Responsável, Imagens, Comentários & Data */}
+      <div className="mt-3 flex items-center justify-between gap-1.5 border-t border-slate-100 dark:border-white/5 pt-2 text-[11px]">
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+          <span
+            className={`font-comfortaa rounded-lg border px-2 py-0.5 font-medium ${categoryInfo.bg} ${categoryInfo.text}`}
+          >
+            {categoryInfo.label}
+          </span>
 
-        <div className="flex items-center gap-2">
+          {task.assignee ? (
+            <div
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 text-[10.5px] font-comfortaa font-medium text-slate-700 dark:text-slate-300 shadow-2xs max-w-[120px]"
+              title={`Responsável: ${task.assignee}`}
+            >
+              <span className="h-3.5 w-3.5 rounded-full bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-bold text-[8.5px] flex items-center justify-center uppercase font-mono border border-cyan-500/30 shrink-0">
+                {task.assignee.trim().charAt(0)}
+              </span>
+              <span className="truncate">{task.assignee}</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick?.(task);
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1 text-[10px] font-comfortaa text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 px-1.5 py-0.5 rounded-md border border-dashed border-slate-300 dark:border-white/10 hover:border-cyan-500/40 cursor-pointer"
+              title="Definir responsável da tarefa"
+            >
+              <User className="h-2.5 w-2.5" />
+              <span>+ Resp.</span>
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Contador de Comentários */}
+          {task.comments && task.comments.length > 0 && (
+            <div
+              className="flex items-center gap-1 font-mono text-[10px] text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded-md border border-cyan-500/20"
+              title={`${task.comments.length} comentário(s)`}
+            >
+              <MessageSquare className="h-3 w-3" />
+              <span>{task.comments.length}</span>
+            </div>
+          )}
+
           {attachedImages.length > 0 && (
             <div
               className="flex items-center gap-1 font-mono text-[10px] text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded-md border border-cyan-500/20"

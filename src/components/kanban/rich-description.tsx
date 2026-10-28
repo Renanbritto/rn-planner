@@ -438,9 +438,8 @@ export function RichDescriptionEditor({
             className="w-full bg-transparent p-3.5 text-xs leading-relaxed text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none font-sans resize-y min-h-[140px]"
           />
 
-          {/* Dica / Rodapé do editor */}
-          <div className="flex items-center justify-between border-t border-slate-200/60 dark:border-white/5 px-3 py-1.5 text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-            <span>Dica: Cole imagens direto (Ctrl+V) ou arraste para cá</span>
+          {/* Rodapé do editor */}
+          <div className="flex items-center justify-end border-t border-slate-200/60 dark:border-white/5 px-3 py-1.5 text-[10px] text-slate-400 dark:text-slate-500 font-mono">
             <span>{value?.length || 0} caracteres</span>
           </div>
 

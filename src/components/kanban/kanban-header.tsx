@@ -358,18 +358,16 @@ export function KanbanHeader({
             >
               <span>{showMobileMetrics ? "Ocultar" : "Detalhes"}</span>
               <ChevronDown
-                className={`h-3.5 w-3.5 transition-transform duration-200 ${
-                  showMobileMetrics ? "rotate-180 text-cyan-500" : ""
-                }`}
+                className={`h-3.5 w-3.5 transition-transform duration-200 ${showMobileMetrics ? "rotate-180 text-cyan-500" : ""
+                  }`}
               />
             </button>
           </div>
 
           {/* Grid de 4 Cards de Métricas Obsidian Glass (Sempre visível no Desktop, expansível no Mobile) */}
           <div
-            className={`grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in duration-200 ${
-              showMobileMetrics ? "grid" : "hidden md:grid"
-            }`}
+            className={`grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in duration-200 ${showMobileMetrics ? "grid" : "hidden md:grid"
+              }`}
           >
             {/* Cyan Metric: Total de Tarefas (#06b6d4) */}
             <div className="relative overflow-hidden rounded-2xl bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 hover:border-cyan-500/40 p-3 sm:p-3.5 transition-all duration-200 shadow-sm dark:shadow-xl dark:shadow-black/20 group">
@@ -483,11 +481,10 @@ export function KanbanHeader({
               <button
                 type="button"
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
-                className={`md:hidden flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-comfortaa font-medium transition-all cursor-pointer shrink-0 ${
-                  activeFiltersCount > 0 || showMobileFilters
+                className={`md:hidden flex items-center gap-1.5 h-9 px-3 rounded-xl border text-xs font-comfortaa font-medium transition-all cursor-pointer shrink-0 ${activeFiltersCount > 0 || showMobileFilters
                     ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-600 dark:text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.15)]"
                     : "border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#090d16] text-slate-700 dark:text-slate-300"
-                }`}
+                  }`}
               >
                 <SlidersHorizontal className="h-3.5 w-3.5 text-cyan-500" />
                 <span>Filtros</span>

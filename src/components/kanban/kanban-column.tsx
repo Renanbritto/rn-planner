@@ -8,6 +8,7 @@ import {
   getColumnColorConfig,
   getColumnSortConfig,
   sortTasks,
+  StatusBadge,
 } from "@/types/planner";
 import { KanbanCard } from "./kanban-card";
 import {
@@ -41,6 +42,7 @@ interface KanbanColumnProps {
   column: KanbanColumnDef;
   tasks: PlannerTask[];
   allColumns?: KanbanColumnDef[];
+  statusBadges?: StatusBadge[];
   isFirst: boolean;
   isLast: boolean;
   totalColumns: number;
@@ -65,6 +67,7 @@ export function KanbanColumn({
   column,
   tasks,
   allColumns = [],
+  statusBadges = [],
   isFirst,
   isLast,
   totalColumns,
@@ -428,6 +431,7 @@ export function KanbanColumn({
               key={task.id}
               task={task}
               columns={allColumns}
+              statusBadges={statusBadges}
               isDragging={activeMoveTaskId === task.id}
               isSelectedToMove={selectedTaskToMove?.id === task.id}
               onDelete={onDeleteTask}

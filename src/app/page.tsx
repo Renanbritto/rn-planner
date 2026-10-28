@@ -70,6 +70,10 @@ export default function PlannerPage() {
     addTask,
     deleteTask,
     updateTask,
+    // Status Badges
+    statusBadges,
+    addStatusBadge,
+    deleteStatusBadge,
     // Sync
     syncStatus,
     syncLocalToCloud,
@@ -178,6 +182,9 @@ export default function PlannerPage() {
               <KanbanBoard
                 columns={columns}
                 tasks={tasks}
+                statusBadges={statusBadges}
+                onAddStatusBadge={addStatusBadge}
+                onDeleteStatusBadge={deleteStatusBadge}
                 onMoveTask={moveTask}
                 onDeleteTask={deleteTask}
                 onQuickAdd={handleQuickAdd}
@@ -231,6 +238,7 @@ export default function PlannerPage() {
         onOpenChange={setIsCardDialogOpen}
         columns={columns}
         defaultColumn={selectedColumn}
+        statusBadges={statusBadges}
         onAddCard={addTask}
       />
 
