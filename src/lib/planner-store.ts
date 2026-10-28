@@ -129,6 +129,13 @@ function getStoredLocalColumns(): KanbanColumnDef[] {
   }));
 }
 
+const REMOVED_DEFAULT_BADGE_IDS = new Set([
+  "badge-ready-deploy",
+  "badge-blocked",
+  "badge-validating",
+  "badge-backlog",
+]);
+
 function getStoredLocalStatusBadges(): StatusBadge[] {
   if (typeof window === "undefined") return DEFAULT_STATUS_BADGES;
   try {
@@ -136,7 +143,10 @@ function getStoredLocalStatusBadges(): StatusBadge[] {
     if (stored) {
       const parsed: StatusBadge[] = JSON.parse(stored);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        const cleaned = parsed.filter((b) => !REMOVED_DEFAULT_BADGE_IDS.has(b.id));
+        if (cleaned.length > 0) {
+          return cleaned;
+        }
       }
     }
   } catch (e) {

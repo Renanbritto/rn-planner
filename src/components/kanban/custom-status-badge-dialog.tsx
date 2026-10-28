@@ -112,7 +112,7 @@ export function CustomStatusBadgeDialog({
                 <Input
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
-                  placeholder="Ex: Em Homologação, Aguardando QA..."
+                  placeholder="Nome do selo..."
                   maxLength={30}
                   autoFocus
                   className="bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white rounded-xl h-9"

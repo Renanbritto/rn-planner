@@ -463,7 +463,7 @@ export function KanbanHeader({
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filtrar por título, código (#RN-101)..."
+                  placeholder="Filtrar tarefas..."
                   className="h-9 pl-9 bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
                 />
                 {searchQuery && (

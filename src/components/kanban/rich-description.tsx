@@ -382,7 +382,7 @@ export function RichDescriptionEditor({
             <input
               type="url"
               required
-              placeholder="Cole o link da imagem (ex: https://.../screenshot.png)"
+              placeholder="URL da imagem (https://...)"
               value={imageUrlInput}
               onChange={(e) => setImageUrlInput(e.target.value)}
               className="flex-1 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#090d16] px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-cyan-500"

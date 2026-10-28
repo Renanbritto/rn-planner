@@ -123,7 +123,8 @@ export function CardDetailsDialog({
     setPriority(task?.priority || "medium");
     setCategory(task?.category || "work");
     setDueDate(task?.dueDate || "");
-    setStatusBadgeId(task?.statusBadgeId);
+    const badgeExists = statusBadges.some((b) => b.id === task?.statusBadgeId);
+    setStatusBadgeId(badgeExists ? task?.statusBadgeId : undefined);
     setAssignee(task?.assignee || "");
     setRepositoryUrl(task?.repositoryUrl || "");
     setBranchName(task?.branchName || "");
@@ -398,18 +399,6 @@ export function CardDetailsDialog({
                     </button>
                   );
                 })}
-
-                {onAddStatusBadge && (
-                  <button
-                    type="button"
-                    onClick={() => setIsBadgeModalOpen(true)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed border-cyan-500/40 hover:border-cyan-500 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 text-xs font-comfortaa font-medium transition-all cursor-pointer"
-                    title="Adicionar novo selo personalizado"
-                  >
-                    <Plus className="h-3 w-3" />
-                    <span>Novo Selo</span>
-                  </button>
-                )}
               </div>
             </div>
 
@@ -519,7 +508,7 @@ export function CardDetailsDialog({
                     <Input
                       value={assignee}
                       onChange={(e) => setAssignee(e.target.value)}
-                      placeholder="Nome do responsável (ex: Renan Britto, Equipe Dev)..."
+                      placeholder="Nome do responsável..."
                       maxLength={60}
                       className="bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl font-comfortaa h-9 pl-9 pr-8"
                     />
@@ -591,7 +580,7 @@ export function CardDetailsDialog({
                         <Input
                           value={repositoryUrl}
                           onChange={(e) => setRepositoryUrl(e.target.value)}
-                          placeholder="Ex: Renanbritto/rn-planner ou URL..."
+                          placeholder="Repositório Git..."
                           className="h-8.5 bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-mono pr-7 rounded-xl"
                         />
                         {repositoryUrl && (
@@ -617,7 +606,7 @@ export function CardDetailsDialog({
                         <Input
                           value={branchName}
                           onChange={(e) => setBranchName(e.target.value)}
-                          placeholder="Ex: feature/repo-branch-link..."
+                          placeholder="Nome da branch..."
                           className="h-8.5 bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-mono pr-7 rounded-xl"
                         />
                         {branchName && (
@@ -676,7 +665,7 @@ export function CardDetailsDialog({
                         handleAddComment();
                       }
                     }}
-                    placeholder="Escreva uma atualização ou nota (ex: 'Finalizei a query SQL e comecei a UI'). Pressione Ctrl+Enter para enviar..."
+                    placeholder="Escreva uma atualização ou comentário..."
                     rows={3}
                     className="w-full rounded-2xl border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 bg-white dark:bg-[#090d16] p-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 resize-y font-sans leading-relaxed"
                   />

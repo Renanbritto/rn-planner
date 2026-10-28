@@ -129,7 +129,7 @@ export function NewCardDialog({
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Treinar modelo XGBoost ou Refatorar queries"
+              placeholder="Título da tarefa..."
               className="bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl"
               autoFocus
             />
@@ -279,7 +279,7 @@ export function NewCardDialog({
               <Input
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
-                placeholder="Ex: Renan Britto, Ana Silva..."
+                placeholder="Nome do responsável..."
                 maxLength={60}
                 className="bg-slate-50 dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-cyan-500/50 rounded-xl font-comfortaa h-9 pl-9 pr-8"
               />
@@ -314,7 +314,7 @@ export function NewCardDialog({
                   <Input
                     value={repositoryUrl}
                     onChange={(e) => setRepositoryUrl(e.target.value)}
-                    placeholder="Ex: Renanbritto/rn-planner ou URL..."
+                    placeholder="Repositório Git..."
                     maxLength={200}
                     className="h-8.5 bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-mono pr-7 rounded-xl"
                   />
@@ -341,7 +341,7 @@ export function NewCardDialog({
                   <Input
                     value={branchName}
                     onChange={(e) => setBranchName(e.target.value)}
-                    placeholder="Ex: feature/repo-branch-link..."
+                    placeholder="Nome da branch..."
                     maxLength={100}
                     className="h-8.5 bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-mono pr-7 rounded-xl"
                   />

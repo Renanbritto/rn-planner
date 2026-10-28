@@ -160,10 +160,6 @@ export function getGitLinkUrl(repositoryUrl?: string, branchName?: string): stri
 export const DEFAULT_STATUS_BADGES: StatusBadge[] = [
   { id: "badge-in-review", label: "Em Revisão", color: "purple" },
   { id: "badge-waiting", label: "Aguardando", color: "amber" },
-  { id: "badge-ready-deploy", label: "Pronto p/ Deploy", color: "emerald" },
-  { id: "badge-blocked", label: "Bloqueado", color: "rose" },
-  { id: "badge-validating", label: "Em Validação", color: "cyan" },
-  { id: "badge-backlog", label: "Ideia / Backlog", color: "indigo" },
 ];
 
 export interface BadgeColorConfig {
