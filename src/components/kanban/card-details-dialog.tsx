@@ -12,6 +12,7 @@ import {
   getStatusBadgeColorConfig,
   CardComment,
   formatCardCode,
+  getGitLinkUrl,
 } from "@/types/planner";
 import {
   Dialog,
@@ -37,6 +38,10 @@ import {
   User,
   Plus,
   X,
+  GitBranch,
+  FolderGit2,
+  ExternalLink,
+  Terminal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RichDescriptionEditor } from "./rich-description";
@@ -100,6 +105,9 @@ export function CardDetailsDialog({
   const [dueDate, setDueDate] = useState(task?.dueDate || "");
   const [statusBadgeId, setStatusBadgeId] = useState<string | undefined>(task?.statusBadgeId);
   const [assignee, setAssignee] = useState(task?.assignee || "");
+  const [repositoryUrl, setRepositoryUrl] = useState(task?.repositoryUrl || "");
+  const [branchName, setBranchName] = useState(task?.branchName || "");
+  const [copiedCheckout, setCopiedCheckout] = useState(false);
   const [comments, setComments] = useState<CardComment[]>(task?.comments || []);
   const [newCommentText, setNewCommentText] = useState("");
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
@@ -117,11 +125,27 @@ export function CardDetailsDialog({
     setDueDate(task?.dueDate || "");
     setStatusBadgeId(task?.statusBadgeId);
     setAssignee(task?.assignee || "");
+    setRepositoryUrl(task?.repositoryUrl || "");
+    setBranchName(task?.branchName || "");
+    setCopiedCheckout(false);
     setComments(task?.comments || []);
     setNewCommentText("");
     setConfirmDelete(false);
     setCopiedCode(false);
   }
+
+  const handleCopyCheckout = async () => {
+    if (!branchName.trim()) return;
+    const cmd = `git checkout ${branchName.trim()}`;
+    try {
+      await navigator.clipboard.writeText(cmd);
+      setCopiedCheckout(true);
+      toast.success(`Comando "${cmd}" copiado!`);
+      setTimeout(() => setCopiedCheckout(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
 
   if (!task) return null;
 
@@ -198,6 +222,8 @@ export function CardDetailsDialog({
       statusBadgeId,
       comments,
       assignee: assignee.trim() || undefined,
+      repositoryUrl: repositoryUrl.trim() || undefined,
+      branchName: branchName.trim() || undefined,
     });
 
     toast.success(`Card ${formattedCode} atualizado!`);
@@ -264,6 +290,16 @@ export function CardDetailsDialog({
                       {assignee.trim().charAt(0)}
                     </span>
                     <span className="max-w-[120px] truncate">{assignee.trim()}</span>
+                  </div>
+                )}
+
+                {branchName.trim() && (
+                  <div
+                    className="flex items-center gap-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-xs font-mono font-bold text-cyan-700 dark:text-cyan-300 shadow-2xs"
+                    title={`Branch Git: ${branchName.trim()}${repositoryUrl ? ` (${repositoryUrl})` : ""}`}
+                  >
+                    <GitBranch className="h-3 w-3 text-cyan-500" />
+                    <span className="max-w-[130px] truncate">{branchName.trim()}</span>
                   </div>
                 )}
               </div>
@@ -497,6 +533,105 @@ export function CardDetailsDialog({
                         <X className="h-3.5 w-3.5" />
                       </button>
                     )}
+                  </div>
+                </div>
+
+                {/* Vínculo Git (Repositório & Branch) */}
+                <div className="flex flex-col gap-2.5 sm:col-span-2 rounded-xl border border-cyan-500/25 bg-cyan-500/[0.04] p-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <label className="font-comfortaa text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <GitBranch className="h-3.5 w-3.5 text-cyan-500" />
+                      <span>Vínculo Git (Repositório & Branch)</span>
+                    </label>
+
+                    <div className="flex items-center gap-2">
+                      {branchName.trim() && (
+                        <button
+                          type="button"
+                          onClick={handleCopyCheckout}
+                          className="flex items-center gap-1 text-[11px] font-mono font-medium text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors cursor-pointer"
+                          title="Copiar comando git checkout"
+                        >
+                          {copiedCheckout ? (
+                            <>
+                              <Check className="h-3 w-3 text-emerald-500" />
+                              <span className="text-emerald-500 font-semibold">Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Terminal className="h-3 w-3 opacity-70" />
+                              <span>git checkout</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {getGitLinkUrl(repositoryUrl, branchName) && (
+                        <a
+                          href={getGitLinkUrl(repositoryUrl, branchName)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-comfortaa font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors"
+                        >
+                          <span>Abrir no Git</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* Repositório */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10.5px] font-comfortaa font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                        <FolderGit2 className="h-3 w-3 text-cyan-500" />
+                        <span>Repositório</span>
+                      </span>
+                      <div className="relative flex items-center">
+                        <Input
+                          value={repositoryUrl}
+                          onChange={(e) => setRepositoryUrl(e.target.value)}
+                          placeholder="Ex: Renanbritto/rn-planner ou URL..."
+                          className="h-8.5 bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-mono pr-7 rounded-xl"
+                        />
+                        {repositoryUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setRepositoryUrl("")}
+                            className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer"
+                            title="Limpar repositório"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Branch */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10.5px] font-comfortaa font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                        <GitBranch className="h-3 w-3 text-cyan-500" />
+                        <span>Branch</span>
+                      </span>
+                      <div className="relative flex items-center">
+                        <Input
+                          value={branchName}
+                          onChange={(e) => setBranchName(e.target.value)}
+                          placeholder="Ex: feature/repo-branch-link..."
+                          className="h-8.5 bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-mono pr-7 rounded-xl"
+                        />
+                        {branchName && (
+                          <button
+                            type="button"
+                            onClick={() => setBranchName("")}
+                            className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer"
+                            title="Limpar branch"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

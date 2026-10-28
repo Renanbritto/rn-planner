@@ -185,6 +185,8 @@ function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
             const comments = t.comments ?? meta.comments ?? [];
             const statusBadgeId = t.statusBadgeId ?? meta.statusBadgeId;
             const assignee = t.assignee ?? meta.assignee;
+            const repositoryUrl = t.repositoryUrl ?? meta.repositoryUrl;
+            const branchName = t.branchName ?? meta.branchName;
             const cleanDesc =
               meta.cleanDescription !== undefined ? meta.cleanDescription : t.description;
 
@@ -194,6 +196,8 @@ function getStoredLocalTasks(validColumns: KanbanColumnDef[]): PlannerTask[] {
               statusBadgeId,
               comments,
               assignee,
+              repositoryUrl,
+              branchName,
               workspaceId: wsId,
               column: wsColIds.has(t.column) ? t.column : fallbackColId,
             };
@@ -823,6 +827,8 @@ export function usePlanner() {
       statusBadgeId?: string;
       comments?: CardComment[];
       assignee?: string;
+      repositoryUrl?: string;
+      branchName?: string;
     }) => {
       const nextNumber = tasks.length + 101;
       const validColIds = new Set(activeWorkspaceColumns.map((c) => c.id));
@@ -839,6 +845,8 @@ export function usePlanner() {
         statusBadgeId: data.statusBadgeId || undefined,
         comments: data.comments || [],
         assignee: data.assignee ? sanitizeString(data.assignee, 60) : undefined,
+        repositoryUrl: data.repositoryUrl ? sanitizeString(data.repositoryUrl, 200) : undefined,
+        branchName: data.branchName ? sanitizeString(data.branchName, 100) : undefined,
         id: "t-" + Date.now(),
         code: `Task-${nextNumber}`,
         createdAt: new Date().toISOString(),
@@ -927,6 +935,18 @@ export function usePlanner() {
                 ? sanitizeString(updates.assignee, 60)
                 : undefined
               : t.assignee,
+          repositoryUrl:
+            updates.repositoryUrl !== undefined
+              ? updates.repositoryUrl
+                ? sanitizeString(updates.repositoryUrl, 200)
+                : undefined
+              : t.repositoryUrl,
+          branchName:
+            updates.branchName !== undefined
+              ? updates.branchName
+                ? sanitizeString(updates.branchName, 100)
+                : undefined
+              : t.branchName,
         };
         updatedTargetTask = updated;
         return updated;
@@ -975,6 +995,8 @@ export function usePlanner() {
       task.code.toLowerCase().includes(q) ||
       formatCardCode(task.code).toLowerCase().includes(q) ||
       (task.assignee && task.assignee.toLowerCase().includes(q)) ||
+      (task.branchName && task.branchName.toLowerCase().includes(q)) ||
+      (task.repositoryUrl && task.repositoryUrl.toLowerCase().includes(q)) ||
       (task.description && task.description.toLowerCase().includes(q));
 
     const matchesCategory =

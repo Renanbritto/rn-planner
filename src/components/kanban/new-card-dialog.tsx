@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { RichDescriptionEditor } from "./rich-description";
-import { Tag, Check, User, X } from "lucide-react";
+import { Tag, Check, User, X, GitBranch, FolderGit2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 interface NewCardDialogProps {
@@ -36,6 +36,8 @@ interface NewCardDialogProps {
     dueDate: string;
     statusBadgeId?: string;
     assignee?: string;
+    repositoryUrl?: string;
+    branchName?: string;
   }) => void;
 }
 
@@ -54,6 +56,8 @@ export function NewCardDialog({
   const [priority, setPriority] = useState<Priority>("medium");
   const [statusBadgeId, setStatusBadgeId] = useState<string | undefined>(undefined);
   const [assignee, setAssignee] = useState("");
+  const [repositoryUrl, setRepositoryUrl] = useState("");
+  const [branchName, setBranchName] = useState("");
   const [column, setColumn] = useState<string>(() => {
     const validColIds = new Set(columns.map((c) => c.id));
     if (defaultColumn && validColIds.has(defaultColumn)) return defaultColumn;
@@ -94,12 +98,16 @@ export function NewCardDialog({
       dueDate,
       statusBadgeId,
       assignee: assignee.trim() || undefined,
+      repositoryUrl: repositoryUrl.trim() || undefined,
+      branchName: branchName.trim() || undefined,
     });
 
     setTitle("");
     setDescription("");
     setStatusBadgeId(undefined);
     setAssignee("");
+    setRepositoryUrl("");
+    setBranchName("");
     onOpenChange(false);
   };
 
@@ -285,6 +293,70 @@ export function NewCardDialog({
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
+            </div>
+          </div>
+
+          {/* Vínculo Git (Repositório & Branch - Opcional) */}
+          <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] p-3 flex flex-col gap-2">
+            <span className="font-comfortaa text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <GitBranch className="h-3.5 w-3.5 text-cyan-500" />
+              <span>Vínculo Git (Opcional)</span>
+            </span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {/* Repositório */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[10.5px] font-comfortaa font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                  <FolderGit2 className="h-3 w-3 text-cyan-500" />
+                  <span>Repositório</span>
+                </span>
+                <div className="relative flex items-center">
+                  <Input
+                    value={repositoryUrl}
+                    onChange={(e) => setRepositoryUrl(e.target.value)}
+                    placeholder="Ex: Renanbritto/rn-planner ou URL..."
+                    maxLength={200}
+                    className="h-8.5 bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-mono pr-7 rounded-xl"
+                  />
+                  {repositoryUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setRepositoryUrl("")}
+                      className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer"
+                      title="Limpar repositório"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Branch */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[10.5px] font-comfortaa font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                  <GitBranch className="h-3 w-3 text-cyan-500" />
+                  <span>Branch</span>
+                </span>
+                <div className="relative flex items-center">
+                  <Input
+                    value={branchName}
+                    onChange={(e) => setBranchName(e.target.value)}
+                    placeholder="Ex: feature/repo-branch-link..."
+                    maxLength={100}
+                    className="h-8.5 bg-white dark:bg-[#090d16] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 font-mono pr-7 rounded-xl"
+                  />
+                  {branchName && (
+                    <button
+                      type="button"
+                      onClick={() => setBranchName("")}
+                      className="absolute right-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer"
+                      title="Limpar branch"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 

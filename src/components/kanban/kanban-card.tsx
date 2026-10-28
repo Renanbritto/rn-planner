@@ -10,6 +10,7 @@ import {
   DEFAULT_STATUS_BADGES,
   getStatusBadgeColorConfig,
   formatCardCode,
+  getGitLinkUrl,
 } from "@/types/planner";
 import {
   Calendar,
@@ -22,6 +23,8 @@ import {
   Check,
   MessageSquare,
   User,
+  GitBranch,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { extractImagesFromMarkdown, getCleanSnippet } from "./rich-description";
@@ -303,6 +306,47 @@ export function KanbanCard({
       <h3 className="font-comfortaa text-sm font-semibold leading-snug text-slate-800 dark:text-slate-100 group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors">
         {task.title}
       </h3>
+
+      {/* Vínculo Git (Branch / Repositório) */}
+      {(task.branchName || task.repositoryUrl) && (
+        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+          {task.branchName ? (
+            <a
+              href={getGitLinkUrl(task.repositoryUrl, task.branchName) || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                if (getGitLinkUrl(task.repositoryUrl, task.branchName)) {
+                  e.stopPropagation();
+                }
+              }}
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-cyan-500/[0.08] dark:bg-cyan-500/10 border border-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-mono text-[10px] font-bold hover:bg-cyan-500/15 hover:border-cyan-500/35 transition-colors group/git max-w-[200px]"
+              title={`Branch Git: ${task.branchName}${task.repositoryUrl ? ` (${task.repositoryUrl})` : ""}`}
+            >
+              <GitBranch className="h-3 w-3 text-cyan-500 shrink-0" />
+              <span className="truncate">{task.branchName}</span>
+              {task.repositoryUrl && (
+                <ExternalLink className="h-2.5 w-2.5 opacity-60 group-hover/git:opacity-100 shrink-0" />
+              )}
+            </a>
+          ) : (
+            <a
+              href={getGitLinkUrl(task.repositoryUrl) || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 font-mono text-[10px] hover:text-cyan-600 transition-colors max-w-[180px]"
+              title={`Repositório Git: ${task.repositoryUrl}`}
+            >
+              <GitBranch className="h-3 w-3 text-slate-400 shrink-0" />
+              <span className="truncate">{task.repositoryUrl}</span>
+              <ExternalLink className="h-2.5 w-2.5 opacity-60 shrink-0" />
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Descrição Opcional (Limpa de tags e base64 bruto) */}
       {cleanDescription && (

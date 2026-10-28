@@ -140,6 +140,8 @@ export class PlannerService {
           statusBadgeId: meta.statusBadgeId,
           comments: meta.comments,
           assignee: meta.assignee || (t as any).assignee || undefined,
+          repositoryUrl: meta.repositoryUrl || (t as any).repository_url || undefined,
+          branchName: meta.branchName || (t as any).branch_name || undefined,
         };
       });
 
@@ -168,6 +170,8 @@ export class PlannerService {
                     statusBadgeId: t.statusBadgeId,
                     comments: t.comments,
                     assignee: t.assignee,
+                    repositoryUrl: t.repositoryUrl,
+                    branchName: t.branchName,
                   }) || null,
                 category: t.category,
                 priority: t.priority,
@@ -244,6 +248,8 @@ export class PlannerService {
             statusBadgeId: t.statusBadgeId,
             comments: t.comments,
             assignee: t.assignee,
+            repositoryUrl: t.repositoryUrl,
+            branchName: t.branchName,
           }) || null,
         category: t.category,
         priority: t.priority,
@@ -275,6 +281,8 @@ export class PlannerService {
         statusBadgeId: task.statusBadgeId,
         comments: task.comments,
         assignee: task.assignee,
+        repositoryUrl: task.repositoryUrl,
+        branchName: task.branchName,
       });
 
       const { error } = await supabase.from("tasks").upsert(
