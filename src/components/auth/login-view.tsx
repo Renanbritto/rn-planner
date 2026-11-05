@@ -135,7 +135,7 @@ export function LoginView() {
           </div>
 
           <h1 className="font-comfortaa text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white leading-[1.15] tracking-tight">
-            &ldquo;Sua rotina organizada em um s&oacute; lugar.&rdquo;
+            Sua rotina organizada em um s&oacute; lugar
           </h1>
 
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300/90 font-sans leading-relaxed">
