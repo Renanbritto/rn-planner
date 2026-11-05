@@ -9,9 +9,6 @@ import {
   Eye,
   EyeOff,
   Zap,
-  Kanban,
-  PenTool,
-  ShieldCheck,
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
@@ -129,12 +126,6 @@ export function LoginView() {
         {/* Topo: Logo da Marca */}
         <div className="relative z-10 flex items-center justify-between">
           <BrandLogo size={42} showText={true} />
-
-          {/* Tag IA-First sutil */}
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase text-cyan-700 dark:text-cyan-400 bg-cyan-500/10 dark:bg-cyan-500/15 border border-cyan-500/30 dark:border-cyan-500/20">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-pulse" />
-            IA-First Planner
-          </span>
         </div>
 
         {/* Manifesto / Hero Copy */}
@@ -150,39 +141,11 @@ export function LoginView() {
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300/90 font-sans leading-relaxed">
             Isole contextos em workspaces, fatie grandes metas em micro-entregas acion&aacute;veis e execute com clareza total.
           </p>
-
-          {/* Três Pilares Visuais adaptáveis ao tema claro e escuro */}
-          <div className="pt-3 grid grid-cols-3 gap-2.5 sm:gap-3 text-xs">
-            <div className="p-3 rounded-2xl border border-slate-200/90 dark:border-cyan-500/20 bg-white/80 dark:bg-white/[0.03] backdrop-blur-md shadow-xs flex flex-col gap-1 transition-colors">
-              <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400 font-bold font-comfortaa">
-                <Kanban className="h-3.5 w-3.5" />
-                <span>Kanban</span>
-              </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Fluxo &amp; Selos</span>
-            </div>
-
-            <div className="p-3 rounded-2xl border border-slate-200/90 dark:border-indigo-500/20 bg-white/80 dark:bg-white/[0.03] backdrop-blur-md shadow-xs flex flex-col gap-1 transition-colors">
-              <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-400 font-bold font-comfortaa">
-                <PenTool className="h-3.5 w-3.5" />
-                <span>Excalidraw</span>
-              </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Canvas Livre</span>
-            </div>
-
-            <div className="p-3 rounded-2xl border border-slate-200/90 dark:border-emerald-500/20 bg-white/80 dark:bg-white/[0.03] backdrop-blur-md shadow-xs flex flex-col gap-1 transition-colors">
-              <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold font-comfortaa">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Nuvem</span>
-              </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Sync RLS</span>
-            </div>
-          </div>
         </div>
 
         {/* Rodapé esquerdo */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-mono pt-4 border-t border-slate-200/80 dark:border-white/5">
+        <div className="relative z-10 flex items-center text-xs text-slate-500 dark:text-slate-400 font-mono pt-4 border-t border-slate-200/80 dark:border-white/5">
           <span>RN Planner &bull; Personal OS</span>
-          <span className="text-cyan-700 dark:text-cyan-400 font-semibold">Obsidian Glass</span>
         </div>
       </div>
 
@@ -408,9 +371,7 @@ export function LoginView() {
         </div>
 
         {/* Rodapé Direita */}
-        <div className="text-center text-[11px] text-slate-400 dark:text-slate-500 font-mono py-2">
-          RN Planner &bull; Alta Performance com IA
-        </div>
+        <div className="py-2" />
       </div>
     </div>
   );
