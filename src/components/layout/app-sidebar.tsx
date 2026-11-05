@@ -12,6 +12,7 @@ import {
   Plus,
   Check,
   Sliders,
+  Bot,
 } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import {
@@ -43,6 +44,7 @@ interface AppSidebarProps {
   onSelectWorkspace?: (workspaceId: string) => void;
   onOpenNewWorkspace?: () => void;
   onOpenEditWorkspace?: (workspace: Workspace) => void;
+  onOpenTutorial?: () => void;
 }
 
 export function AppSidebar({
@@ -58,6 +60,7 @@ export function AppSidebar({
   onSelectWorkspace,
   onOpenNewWorkspace,
   onOpenEditWorkspace,
+  onOpenTutorial,
 }: AppSidebarProps) {
   const currentWorkspace = activeWorkspace || DEFAULT_WORKSPACE;
   const currentWsColor = getColumnColorConfig(currentWorkspace.color);
@@ -346,6 +349,44 @@ export function AppSidebar({
               </button>
             );
           })}
+
+          {/* Botão Guia / Tutorial IA-First */}
+          {onOpenTutorial && (
+            <div className="pt-2 mt-2 border-t border-slate-100 dark:border-white/5">
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenTutorial();
+                  if (isMobileOpen) setIsMobileOpen(false);
+                }}
+                className={`group relative flex w-full items-center gap-3 rounded-2xl p-2.5 transition-all duration-200 cursor-pointer border border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/15 hover:border-cyan-500/40 text-slate-700 dark:text-slate-200 ${
+                  isCollapsed ? "justify-center" : "justify-start"
+                }`}
+                title="Abrir Tutorial IA-First (Guia Prático)"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 group-hover:scale-105 transition-transform">
+                  <Bot className="h-4 w-4" />
+                </div>
+
+                {!isCollapsed && (
+                  <div className="flex flex-col text-left truncate">
+                    <span className="font-comfortaa text-xs font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-300">
+                      Tutorial IA
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-sans truncate">
+                      Guia de Produtividade
+                    </span>
+                  </div>
+                )}
+
+                {isCollapsed && (
+                  <div className="pointer-events-none absolute left-full ml-3 hidden rounded-xl border border-slate-200 dark:border-white/10 bg-slate-900 px-3 py-1.5 text-xs font-comfortaa font-bold text-white shadow-xl group-hover:block z-50 whitespace-nowrap">
+                    Tutorial IA • Guia Prático
+                  </div>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Rodapé da Sidebar */}

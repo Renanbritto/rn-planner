@@ -18,6 +18,7 @@ import {
   SlidersHorizontal,
   X,
   MoreVertical,
+  Bot,
 } from "lucide-react";
 import { PlannerTask, ColumnSortOption } from "@/types/planner";
 import { SyncStatus } from "@/lib/planner-store";
@@ -51,6 +52,7 @@ interface KanbanHeaderProps {
   setActiveTab?: (tab: "kanban" | "whiteboard") => void;
   onToggleMobileMenu?: () => void;
   onApplySortToAllColumns?: (sortBy: ColumnSortOption) => void;
+  onOpenTutorial?: () => void;
 }
 
 export function KanbanHeader({
@@ -70,6 +72,7 @@ export function KanbanHeader({
   setActiveTab,
   onToggleMobileMenu,
   onApplySortToAllColumns,
+  onOpenTutorial,
 }: KanbanHeaderProps) {
   const [copied, setCopied] = useState(false);
   const [isSetupDialogOpen, setIsSetupDialogOpen] = useState(false);
@@ -252,6 +255,18 @@ export function KanbanHeader({
           {/* Alternador de Tema */}
           <ThemeToggle />
 
+          {/* Botão Tutorial IA-First */}
+          {onOpenTutorial && (
+            <button
+              onClick={onOpenTutorial}
+              className="flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl text-xs font-comfortaa font-semibold text-cyan-700 dark:text-cyan-300 hover:text-cyan-800 dark:hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all cursor-pointer shadow-xs shrink-0"
+              title="Abrir Tutorial IA-First (Guia Prático)"
+            >
+              <Bot className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+              <span className="hidden sm:inline">Tutorial IA</span>
+            </button>
+          )}
+
           {/* Desktop Only: Modo Convidado Sair */}
           {isGuestMode && !user && (
             <button
@@ -295,6 +310,16 @@ export function KanbanHeader({
                   <Share2 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
                   <span>Compartilhar Link</span>
                 </DropdownMenuItem>
+
+                {onOpenTutorial && (
+                  <DropdownMenuItem
+                    onClick={onOpenTutorial}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/10 font-comfortaa font-medium"
+                  >
+                    <Bot className="h-4 w-4 text-cyan-500" />
+                    <span>Tutorial IA • Guia</span>
+                  </DropdownMenuItem>
+                )}
 
                 {syncStatus === "local" && onSyncLocalToCloud && (
                   <DropdownMenuItem

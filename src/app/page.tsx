@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { usePlanner } from "@/lib/planner-store";
 import { LoginView } from "@/components/auth/login-view";
@@ -12,6 +12,7 @@ import { NewCardDialog } from "@/components/kanban/new-card-dialog";
 import { NewColumnDialog } from "@/components/kanban/new-column-dialog";
 import { NewWorkspaceDialog } from "@/components/workspace/new-workspace-dialog";
 import { EditWorkspaceDialog } from "@/components/workspace/edit-workspace-dialog";
+import { AiOnboardingDialog } from "@/components/onboarding/ai-onboarding-dialog";
 import { Workspace } from "@/types/planner";
 import { Code2, Sliders } from "lucide-react";
 
@@ -84,6 +85,18 @@ export default function PlannerPage() {
   const [isNewWorkspaceDialogOpen, setIsNewWorkspaceDialogOpen] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [selectedColumn, setSelectedColumn] = useState<string>("");
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+
+  // Tutorial automático no primeiro login / primeiro acesso
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (typeof window !== "undefined") {
+      const completed = localStorage.getItem("rn_planner_onboarding_completed_v1");
+      if (!completed) {
+        setIsOnboardingOpen(true);
+      }
+    }
+  }, [isLoaded]);
 
   const handleQuickAdd = (columnId: string) => {
     setSelectedColumn(columnId);
@@ -151,6 +164,7 @@ export default function PlannerPage() {
         onSelectWorkspace={setActiveWorkspaceId}
         onOpenNewWorkspace={() => setIsNewWorkspaceDialogOpen(true)}
         onOpenEditWorkspace={(ws) => setEditingWorkspace(ws)}
+        onOpenTutorial={() => setIsOnboardingOpen(true)}
       />
 
       {/* Área Principal de Conteúdo */}
@@ -174,6 +188,7 @@ export default function PlannerPage() {
             setActiveTab={setActiveTab}
             onToggleMobileMenu={() => setIsMobileSidebarOpen(true)}
             onApplySortToAllColumns={applySortToAllColumns}
+            onOpenTutorial={() => setIsOnboardingOpen(true)}
           />
 
           {/* Alternância entre Quadro Kanban e Whiteboard Canvas (Excalidraw) */}
@@ -266,6 +281,12 @@ export default function PlannerPage() {
         totalWorkspaces={workspaces.length}
         onUpdateWorkspace={updateWorkspace}
         onDeleteWorkspace={deleteWorkspace}
+      />
+
+      {/* Modal Tutorial Onboarding IA-First */}
+      <AiOnboardingDialog
+        open={isOnboardingOpen}
+        onOpenChange={setIsOnboardingOpen}
       />
     </div>
   );
