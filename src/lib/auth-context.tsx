@@ -16,6 +16,9 @@ interface AuthContextType {
   isCloudConfigured: boolean;
   isGuestMode: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
+  signUpWithEmail: (email: string, password: string) => Promise<{ error?: string; message?: string }>;
+  resetPassword: (email: string) => Promise<{ error?: string; message?: string }>;
   switchAccount: () => Promise<void>;
   signOut: () => Promise<void>;
   continueAsGuest: () => void;
@@ -28,6 +31,9 @@ const AuthContext = createContext<AuthContextType>({
   isCloudConfigured: false,
   isGuestMode: false,
   signInWithGoogle: async () => {},
+  signInWithEmail: async () => ({ error: "Não inicializado" }),
+  signUpWithEmail: async () => ({ error: "Não inicializado" }),
+  resetPassword: async () => ({ error: "Não inicializado" }),
   switchAccount: async () => {},
   signOut: async () => {},
   continueAsGuest: () => {},
@@ -188,6 +194,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      if (!supabase) {
+        return { error: "Serviço de autenticação não configurado." };
+      }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error) {
+        return { error: error.message };
+      }
+      if (data.user) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email || "",
+          name:
+            data.user.user_metadata?.full_name ||
+            data.user.email?.split("@")[0] ||
+            "Usuário",
+          avatarUrl: data.user.user_metadata?.avatar_url,
+        });
+        setIsGuestMode(false);
+      }
+      return {};
+    } catch (err: unknown) {
+      return { error: (err as Error)?.message || "Erro ao conectar." };
+    }
+  };
+
+  const signUpWithEmail = async (email: string, password: string) => {
+    try {
+      if (!supabase) {
+        return { error: "Serviço de autenticação não configurado." };
+      }
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
+      });
+      if (error) {
+        return { error: error.message };
+      }
+      if (data.session && data.user) {
+        setUser({
+          id: data.user.id,
+          email: data.user.email || "",
+          name:
+            data.user.user_metadata?.full_name ||
+            data.user.email?.split("@")[0] ||
+            "Usuário",
+          avatarUrl: data.user.user_metadata?.avatar_url,
+        });
+        setIsGuestMode(false);
+        return {};
+      }
+      return { message: "Cadastro realizado! Verifique seu e-mail para confirmar a conta." };
+    } catch (err: unknown) {
+      return { error: (err as Error)?.message || "Erro ao cadastrar." };
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      if (!supabase) {
+        return { error: "Serviço de autenticação não configurado." };
+      }
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: redirectUrl,
+      });
+      if (error) {
+        return { error: error.message };
+      }
+      return { message: "Link de recuperação enviado para o seu e-mail!" };
+    } catch (err: unknown) {
+      return { error: (err as Error)?.message || "Erro ao enviar recuperação." };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -196,6 +285,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isCloudConfigured: isSupabaseConfigured,
         isGuestMode,
         signInWithGoogle,
+        signInWithEmail,
+        signUpWithEmail,
+        resetPassword,
         switchAccount,
         signOut,
         continueAsGuest,
