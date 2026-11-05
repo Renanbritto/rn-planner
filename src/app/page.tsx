@@ -105,6 +105,8 @@ export default function PlannerPage() {
     setIsTourOpen(false);
     setIsNewWorkspaceDialogOpen(false);
     setIsCardDialogOpen(false);
+    setIsMobileSidebarOpen(false);
+    setActiveTab("kanban");
   };
 
   // No mobile a sidebar é um drawer: abre/fecha automaticamente nos passos que a usam
@@ -241,17 +243,21 @@ export default function PlannerPage() {
           integrado.
         </>
       ),
-      actionHint: "Clique em “Excalidraw” para continuar",
+      actionHint: "Clique em “Excalidraw” ou em Próximo para continuar",
       onEnter: () => {
         setActiveTab("kanban");
         openSidebarOnMobile();
       },
-      onExit: closeSidebarOnMobile,
+      onExit: () => {
+        closeSidebarOnMobile();
+        setActiveTab("whiteboard");
+      },
     },
     {
       id: "whiteboard",
       target: "whiteboard",
       padding: 4,
+      optional: true,
       title: "Rascunhe a vontade",
       content: (
         <>
@@ -268,16 +274,20 @@ export default function PlannerPage() {
       placement: "right",
       title: "Do rascunho para a ação",
       content: <>Desenhou? Agora transforme o rascunho em cards. Volte para o quadro.</>,
-      actionHint: "Clique em “Card” para voltar ao quadro",
+      actionHint: "Clique em “Card” ou em Próximo para voltar ao quadro",
       onEnter: () => {
         setActiveTab("whiteboard");
         openSidebarOnMobile();
       },
-      onExit: closeSidebarOnMobile,
+      onExit: () => {
+        closeSidebarOnMobile();
+        setActiveTab("kanban");
+      },
     },
     {
       id: "tutorial-button",
       target: "tutorial-button",
+      optional: true,
       title: "Precisa rever?",
       content: <>Este botão reabre o tour sempre que quiser.</>,
       onEnter: () => setActiveTab("kanban"),

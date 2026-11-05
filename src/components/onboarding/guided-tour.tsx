@@ -9,14 +9,15 @@ import {
   X,
   MousePointerClick,
   Trophy,
-  SkipForward,
 } from "lucide-react";
 
 /**
  * Tour guiado estilo "tutorial de jogo":
  * - Escurece a tela e abre um "buraco" (spotlight) sobre o elemento alvo
  * - Balão com setinha ancorado no alvo, barra de XP e contador de missão
- * - Passos interativos (action: "click"): o usuário precisa clicar no alvo real para avançar
+ * - Botão "Próximo" SEMPRE visível em todas as etapas (nunca desaparece nem trava o usuário)
+ * - Passos com action: "click" permitem tanto clicar no alvo real quanto no botão "Próximo"
+ * - Otimizado para alto desempenho (sem loops de RAF infinitos, layout estável no mobile e desktop)
  *
  * Os alvos são marcados no JSX com o atributo `data-tour="<id>"`.
  */
@@ -30,10 +31,10 @@ export interface TourStep {
   title: string;
   content: React.ReactNode;
   placement?: TourPlacement;
-  /** Passo interativo: só avança quando o usuário clica no elemento destacado. */
+  /** Passo com ação sugerida: o usuário pode clicar no alvo real OU no botão Próximo. */
   action?: "click";
   actionHint?: string;
-  /** Se o alvo não existir/estiver invisível, o passo é pulado automaticamente. */
+  /** Se o alvo não existir/estiver invisível, o passo é pulado instantaneamente. */
   optional?: boolean;
   padding?: number;
   onEnter?: () => void;
@@ -51,9 +52,11 @@ type Side = "top" | "bottom" | "left" | "right";
 type Position = { top: number; left: number; side: Side | "center"; arrow: number };
 
 const TOOLTIP_W = 360;
-const GAP = 16;
+const GAP = 14;
 const MARGIN = 12;
-const TARGET_TIMEOUT_MS = 2500;
+const TARGET_POLL_INTERVAL = 35; // ms entre checagens rápidas de montagem de modal
+const OPTIONAL_TIMEOUT_MS = 90; // ms: se o elemento opcional estiver oculto (ex: display:none no mobile), pula sem travar
+const REQUIRED_TIMEOUT_MS = 600; // ms: se elemento demorar a montar, exibe centralizado com botão Próximo ativo
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), Math.max(min, max));
@@ -62,8 +65,9 @@ function clamp(value: number, min: number, max: number) {
 function findVisibleTarget(target: string): HTMLElement | null {
   const nodes = document.querySelectorAll<HTMLElement>(`[data-tour="${target}"]`);
   for (const el of Array.from(nodes)) {
+    if (!el.isConnected) continue;
     const r = el.getBoundingClientRect();
-    if (r.width > 0 && r.height > 0 && r.right > 0 && r.left < window.innerWidth) {
+    if (r.width > 0 && r.height > 0) {
       return el;
     }
   }
@@ -89,25 +93,47 @@ function computePosition(
 
   const right = hole.left + hole.width;
   const bottom = hole.top + hole.height;
-  const fits: Record<Side, boolean> = {
-    right: vw - right >= tw + GAP + MARGIN,
-    left: hole.left >= tw + GAP + MARGIN,
-    bottom: vh - bottom >= th + GAP + MARGIN,
-    top: hole.top >= th + GAP + MARGIN,
-  };
-  const order: Side[] = [
-    ...(preferred ? [preferred as Side] : []),
-    "bottom",
-    "right",
-    "top",
-    "left",
-  ];
-  const side = order.find((s) => fits[s]);
 
-  // Alvo muito grande (ex.: canvas): balão flutua no rodapé da tela, por cima do destaque
+  const fitsBottom = vh - bottom >= th + GAP + MARGIN;
+  const fitsTop = hole.top >= th + GAP + MARGIN;
+  const fitsRight = vw - right >= tw + GAP + MARGIN;
+  const fitsLeft = hole.left >= tw + GAP + MARGIN;
+
+  const fits: Record<Side, boolean> = {
+    bottom: fitsBottom,
+    top: fitsTop,
+    right: fitsRight,
+    left: fitsLeft,
+  };
+
+  const isMobile = vw < 640;
+  let side: Side | undefined;
+
+  const preferredSide = preferred as Side | undefined;
+
+  if (preferredSide && fits[preferredSide]) {
+    side = preferredSide;
+  } else if (!isMobile && (fits.right || fits.left)) {
+    side = fits.right ? "right" : "left";
+  } else if (fits.bottom) {
+    side = "bottom";
+  } else if (fits.top) {
+    side = "top";
+  } else {
+    // Escolhe o lado vertical que tiver mais espaço livre na tela
+    const spaceBelow = vh - bottom;
+    const spaceAbove = hole.top;
+    if (spaceBelow >= spaceAbove && spaceBelow > 80) {
+      side = "bottom";
+    } else if (spaceAbove > 80) {
+      side = "top";
+    }
+  }
+
+  // Alvo muito grande ou espaço muito apertado: centralizado/rodapé
   if (!side) {
     return {
-      top: vh - th - MARGIN * 2,
+      top: clamp(vh - th - MARGIN * 2, MARGIN, vh - th - MARGIN),
       left: clamp(hole.left + hole.width / 2 - tw / 2, MARGIN, vw - tw - MARGIN),
       side: "center",
       arrow: 0,
@@ -116,17 +142,22 @@ function computePosition(
 
   if (side === "left" || side === "right") {
     const top = clamp(hole.top + hole.height / 2 - th / 2, MARGIN, vh - th - MARGIN);
+    const left = side === "right" ? right + GAP : hole.left - GAP - tw;
     return {
       top,
-      left: side === "right" ? right + GAP : hole.left - GAP - tw,
+      left: clamp(left, MARGIN, vw - tw - MARGIN),
       side,
       arrow: clamp(hole.top + hole.height / 2 - top, 20, th - 20),
     };
   }
 
+  // side === "top" | "bottom"
   const left = clamp(hole.left + hole.width / 2 - tw / 2, MARGIN, vw - tw - MARGIN);
+  const rawTop = side === "bottom" ? bottom + GAP : hole.top - GAP - th;
+  const top = clamp(rawTop, MARGIN, vh - th - MARGIN);
+
   return {
-    top: side === "bottom" ? bottom + GAP : hole.top - GAP - th,
+    top,
     left,
     side,
     arrow: clamp(hole.left + hole.width / 2 - left, 20, tw - 20),
@@ -139,8 +170,8 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
   const [missingIndex, setMissingIndex] = useState<number | null>(null);
   const [tooltipSize, setTooltipSize] = useState({ w: TOOLTIP_W, h: 240 });
   const [viewport, setViewport] = useState(() => ({
-    w: window.innerWidth,
-    h: window.innerHeight,
+    w: typeof window !== "undefined" ? window.innerWidth : 1200,
+    h: typeof window !== "undefined" ? window.innerHeight : 800,
   }));
   const [shake, setShake] = useState(false);
 
@@ -160,12 +191,11 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
   const rect = measured?.index === index ? measured.rect : null;
   const targetMissing = missingIndex === index;
 
-  const goTo = useCallback((next: number) => {
-    directionRef.current = next >= 0 ? 1 : -1;
+  const goTo = useCallback((nextStep: number) => {
+    directionRef.current = nextStep >= 0 ? 1 : -1;
     setIndex((current) => {
-      const target = current + next;
+      const target = current + nextStep;
       if (target >= stepsRef.current.length) {
-        // Fim da jornada
         window.setTimeout(() => onCloseRef.current(true), 0);
         return current;
       }
@@ -177,7 +207,7 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
   const prev = useCallback(() => goTo(-1), [goTo]);
   const skip = useCallback(() => onCloseRef.current(false), []);
 
-  // Ciclo de vida de cada passo: onEnter/onExit + rastreio contínuo do alvo
+  // Ciclo de vida do passo: medição limpa, sem laço contínuo de requestAnimationFrame
   useEffect(() => {
     const current = stepsRef.current[index];
     if (!current) return;
@@ -185,68 +215,124 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
     current.onEnter?.();
 
     if (!current.target) {
+      setMeasured(null);
+      setMissingIndex(null);
       return () => current.onExit?.();
     }
 
     let cancelled = false;
-    let raf = 0;
-    let el: HTMLElement | null = null;
-    let scrolled = false;
-    let listened: HTMLElement | null = null;
-    let advanceTimer = 0;
+    let targetEl: HTMLElement | null = null;
+    let pollTimer: number | null = null;
+    let advanceTimer: number | null = null;
+    let resizeObserver: ResizeObserver | null = null;
     const startedAt = performance.now();
 
-    const handleTargetClick = () => {
-      window.clearTimeout(advanceTimer);
-      advanceTimer = window.setTimeout(() => goTo(1), 280);
-    };
-
-    const loop = () => {
-      if (cancelled) return;
-
-      if (!el || !el.isConnected) {
-        el = findVisibleTarget(current.target!);
-      }
-
-      if (el) {
-        if (!scrolled) {
-          el.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
-          scrolled = true;
-        }
-        if (current.action === "click" && listened !== el) {
-          listened?.removeEventListener("click", handleTargetClick);
-          el.addEventListener("click", handleTargetClick);
-          listened = el;
-        }
-        const r = el.getBoundingClientRect();
-        setMeasured((prevMeasured) =>
+    const updateRect = () => {
+      if (!targetEl || cancelled) return;
+      const r = targetEl.getBoundingClientRect();
+      setMeasured((prevMeasured) => {
+        if (
           prevMeasured &&
           prevMeasured.index === index &&
-          prevMeasured.rect.top === r.top &&
-          prevMeasured.rect.left === r.left &&
-          prevMeasured.rect.width === r.width &&
-          prevMeasured.rect.height === r.height
-            ? prevMeasured
-            : { index, rect: { top: r.top, left: r.left, width: r.width, height: r.height } }
-        );
-      } else if (performance.now() - startedAt > TARGET_TIMEOUT_MS) {
-        if (current.optional) {
-          goTo(directionRef.current);
-          return;
+          Math.abs(prevMeasured.rect.top - r.top) < 0.5 &&
+          Math.abs(prevMeasured.rect.left - r.left) < 0.5 &&
+          Math.abs(prevMeasured.rect.width - r.width) < 0.5 &&
+          Math.abs(prevMeasured.rect.height - r.height) < 0.5
+        ) {
+          return prevMeasured;
         }
-        setMissingIndex(index);
-      }
-
-      raf = requestAnimationFrame(loop);
+        return { index, rect: { top: r.top, left: r.left, width: r.width, height: r.height } };
+      });
     };
 
-    raf = requestAnimationFrame(loop);
+    const handleTargetClick = () => {
+      if (advanceTimer) window.clearTimeout(advanceTimer);
+      advanceTimer = window.setTimeout(() => goTo(1), 220);
+    };
+
+    let ticking = false;
+    const onScrollOrResize = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          ticking = false;
+          updateRect();
+        });
+      }
+    };
+
+    const attachTarget = (el: HTMLElement) => {
+      targetEl = el;
+      updateRect();
+
+      // Scroll suave apenas se o elemento não estiver visível na viewport
+      const r = el.getBoundingClientRect();
+      const inView =
+        r.top >= 40 &&
+        r.bottom <= window.innerHeight - 40 &&
+        r.left >= 0 &&
+        r.right <= window.innerWidth;
+
+      if (!inView) {
+        try {
+          el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+        } catch {
+          el.scrollIntoView();
+        }
+        // Atualiza a posição logo após o scroll
+        window.setTimeout(updateRect, 120);
+        window.setTimeout(updateRect, 320);
+      }
+
+      if (current.action === "click") {
+        el.addEventListener("click", handleTargetClick);
+      }
+
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObserver = new ResizeObserver(() => updateRect());
+        resizeObserver.observe(el);
+      }
+
+      window.addEventListener("scroll", onScrollOrResize, { passive: true });
+      window.addEventListener("resize", onScrollOrResize, { passive: true });
+    };
+
+    const poll = () => {
+      if (cancelled) return;
+      const el = findVisibleTarget(current.target!);
+      if (el) {
+        attachTarget(el);
+        return;
+      }
+
+      const elapsed = performance.now() - startedAt;
+      if (current.optional && elapsed > OPTIONAL_TIMEOUT_MS) {
+        // Elemento opcional oculto (ex: métricas no mobile): avança imediatamente sem travar
+        goTo(directionRef.current);
+        return;
+      }
+
+      if (elapsed > REQUIRED_TIMEOUT_MS) {
+        // Alvo demorou a aparecer: exibe balão centralizado com botão Próximo funcional
+        setMissingIndex(index);
+        return;
+      }
+
+      pollTimer = window.setTimeout(poll, TARGET_POLL_INTERVAL);
+    };
+
+    poll();
 
     return () => {
       cancelled = true;
-      cancelAnimationFrame(raf);
-      window.clearTimeout(advanceTimer);
-      listened?.removeEventListener("click", handleTargetClick);
+      if (pollTimer) window.clearTimeout(pollTimer);
+      if (advanceTimer) window.clearTimeout(advanceTimer);
+      if (targetEl && current.action === "click") {
+        targetEl.removeEventListener("click", handleTargetClick);
+      }
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
       current.onExit?.();
     };
   }, [index, goTo]);
@@ -262,7 +348,7 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
     return () => ro.disconnect();
   }, []);
 
-  // Viewport
+  // Viewport resize
   useEffect(() => {
     const onResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener("resize", onResize);
@@ -272,11 +358,10 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
   // Atalhos de teclado
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const current = stepsRef.current[index];
       if (e.key === "Escape") {
         e.preventDefault();
         skip();
-      } else if ((e.key === "ArrowRight" || e.key === "Enter") && current?.action !== "click") {
+      } else if (e.key === "ArrowRight" || e.key === "Enter") {
         e.preventDefault();
         next();
       } else if (e.key === "ArrowLeft") {
@@ -286,16 +371,16 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [index, next, prev, skip]);
+  }, [next, prev, skip]);
 
-  const nudge = () => {
+  const nudge = useCallback(() => {
     setShake(true);
     window.setTimeout(() => setShake(false), 450);
-  };
+  }, []);
 
   if (!step) return null;
 
-  // Recorte do spotlight (limitado à viewport para alvos gigantes)
+  // Recorte do spotlight (limitado à viewport)
   let hole: Rect | null = null;
   if (rect && step.placement !== "center") {
     const pad = step.padding ?? 8;
@@ -333,17 +418,22 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
       : null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] pointer-events-none" role="dialog" aria-modal="true" aria-label="Tour guiado">
-      {/* Camada escura */}
+    <div
+      className="fixed inset-0 z-[200] pointer-events-none touch-pan-y"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Tour guiado"
+    >
+      {/* Camada escura e Recorte */}
       {hole ? (
         <>
-          {/* Bloqueadores em volta do recorte (clique fora = balão "treme") */}
-          <div className="absolute pointer-events-auto" style={{ top: 0, left: 0, right: 0, height: hole.top }} onClick={nudge} />
+          {/* Bloqueadores em volta do recorte para evitar cliques acidentais fora */}
+          <div className="absolute pointer-events-auto" style={{ top: 0, left: 0, right: 0, height: Math.max(0, hole.top) }} onClick={nudge} />
           <div className="absolute pointer-events-auto" style={{ top: hole.top + hole.height, left: 0, right: 0, bottom: 0 }} onClick={nudge} />
-          <div className="absolute pointer-events-auto" style={{ top: hole.top, left: 0, width: hole.left, height: hole.height }} onClick={nudge} />
+          <div className="absolute pointer-events-auto" style={{ top: hole.top, left: 0, width: Math.max(0, hole.left), height: hole.height }} onClick={nudge} />
           <div className="absolute pointer-events-auto" style={{ top: hole.top, left: hole.left + hole.width, right: 0, height: hole.height }} onClick={nudge} />
 
-          {/* Passo informativo: o alvo não é clicável */}
+          {/* Passo informativo: o alvo é apenas visualizado */}
           {!isInteractive && (
             <div
               className="absolute pointer-events-auto cursor-default"
@@ -352,9 +442,9 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
             />
           )}
 
-          {/* Spotlight */}
+          {/* Spotlight com sombra e anel neon com aceleração por GPU */}
           <div
-            className="absolute rounded-2xl transition-all duration-300 ease-out"
+            className="absolute rounded-2xl will-change-[top,left,width,height] transition-[top,left,width,height] duration-200 ease-out pointer-events-none"
             style={{
               top: hole.top,
               left: hole.left,
@@ -364,14 +454,14 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
             }}
           />
           <div
-            className="absolute rounded-2xl border-2 border-cyan-400 shadow-[0_0_24px_rgba(6,182,212,0.55)] transition-all duration-300 ease-out animate-[tour-ring_1.8s_ease-in-out_infinite]"
+            className="absolute rounded-2xl border-2 border-cyan-400 shadow-[0_0_24px_rgba(6,182,212,0.55)] will-change-[top,left,width,height] transition-[top,left,width,height] duration-200 ease-out animate-[tour-ring_1.8s_ease-in-out_infinite] pointer-events-none"
             style={{ top: hole.top, left: hole.left, width: hole.width, height: hole.height }}
           />
 
-          {/* Mãozinha indicando o clique (passos interativos) */}
+          {/* Mãozinha indicativa nos passos interativos */}
           {isInteractive && (
             <div
-              className="absolute text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.9)] animate-bounce"
+              className="absolute text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.9)] animate-bounce pointer-events-none z-10"
               style={{
                 top: hole.top + hole.height - 10,
                 left: hole.left + hole.width / 2 - 4,
@@ -383,15 +473,15 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
         </>
       ) : (
         <div
-          className="absolute inset-0 pointer-events-auto bg-slate-950/70 backdrop-blur-[2px] animate-in fade-in duration-300"
+          className="absolute inset-0 pointer-events-auto bg-slate-950/70 backdrop-blur-[2px] animate-in fade-in duration-200"
           onClick={nudge}
         />
       )}
 
-      {/* Balão do guia */}
+      {/* Balão do Guia */}
       <div
         ref={tooltipRef}
-        className={`absolute pointer-events-auto rounded-2xl border border-cyan-500/30 bg-white dark:bg-[#0b0f1a] text-slate-900 dark:text-slate-100 shadow-2xl shadow-black/40 transition-[top,left,opacity] duration-300 ease-out ${
+        className={`absolute pointer-events-auto rounded-2xl border border-cyan-500/30 bg-white dark:bg-[#0b0f1a] text-slate-900 dark:text-slate-100 shadow-2xl shadow-black/40 transition-[top,left,opacity] duration-200 ease-out ${
           waitingTarget ? "opacity-0" : "opacity-100"
         } ${shake ? "animate-[tour-shake_0.45s_ease-in-out]" : ""}`}
         style={{ top: pos.top, left: pos.left, width: tooltipWidth }}
@@ -414,7 +504,7 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
         )}
 
         <div className="relative p-4 sm:p-5 flex flex-col gap-3">
-          {/* Cabeçalho: avatar do guia + contador de missão */}
+          {/* Cabeçalho */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
               <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-600 text-white shadow-[0_0_14px_rgba(6,182,212,0.5)]">
@@ -438,24 +528,25 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
             </button>
           </div>
 
-          {/* Barra de XP */}
+          {/* Barra de Progresso / XP */}
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-sky-500 to-emerald-400 shadow-[0_0_8px_rgba(6,182,212,0.6)] transition-all duration-500 ease-out"
+              className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-sky-500 to-emerald-400 shadow-[0_0_8px_rgba(6,182,212,0.6)] transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          {/* Conteúdo */}
+          {/* Conteúdo do Balão */}
           <div className="flex flex-col gap-1.5">
             <h3 className="font-comfortaa text-base font-bold tracking-tight">{step.title}</h3>
             <div className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">{step.content}</div>
           </div>
 
+          {/* Dica de Ação em Passos Interativos */}
           {isInteractive && (
             <div className="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
               <MousePointerClick className="h-4 w-4 shrink-0 animate-pulse" />
-              <span>{step.actionHint ?? "Clique no item destacado para continuar"}</span>
+              <span>{step.actionHint ?? "Clique no item destacado ou em Próximo"}</span>
             </div>
           )}
 
@@ -465,7 +556,7 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
             </div>
           )}
 
-          {/* Rodapé */}
+          {/* Rodapé: Botões de Ação (Próximo SEMPRE visível) */}
           <div className="flex items-center justify-between gap-2 pt-1">
             <div className="flex items-center gap-1">
               {index > 0 && (
@@ -489,17 +580,7 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
               )}
             </div>
 
-            {isInteractive ? (
-              <button
-                type="button"
-                onClick={next}
-                className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-comfortaa text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                title="Avançar sem clicar"
-              >
-                Pular etapa
-                <SkipForward className="h-3 w-3" />
-              </button>
-            ) : isLast ? (
+            {isLast ? (
               <button
                 type="button"
                 onClick={next}
@@ -526,4 +607,3 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
     document.body
   );
 }
-
