@@ -184,7 +184,10 @@ export function NewWorkspaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl text-slate-900 dark:text-slate-100 sm:max-w-[480px] shadow-2xl dark:shadow-black/60 rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        data-tour="new-workspace-dialog"
+        className="border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl text-slate-900 dark:text-slate-100 sm:max-w-[480px] shadow-2xl dark:shadow-black/60 rounded-3xl p-6 max-h-[90vh] overflow-y-auto"
+      >
         <DialogHeader>
           <div>
             <DialogTitle className="font-comfortaa text-base font-bold text-slate-900 dark:text-white">

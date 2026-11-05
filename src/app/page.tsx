@@ -103,6 +103,8 @@ export default function PlannerPage() {
   const handleCloseTour = () => {
     localStorage.setItem(TOUR_STORAGE_KEY, "true");
     setIsTourOpen(false);
+    setIsNewWorkspaceDialogOpen(false);
+    setIsCardDialogOpen(false);
   };
 
   // No mobile a sidebar é um drawer: abre/fecha automaticamente nos passos que a usam
@@ -121,8 +123,7 @@ export default function PlannerPage() {
       content: (
         <>
           Eu sou o <strong>RN Guide</strong>. Em menos de 1 minuto vou te mostrar, na prática,
-          como se organizar aqui com o método <strong>IA-First</strong>: contexto isolado,
-          tarefas pequenas e foco no que importa.
+          como se organizar aqui!
         </>
       ),
       onEnter: () => setActiveTab("kanban"),
@@ -131,15 +132,30 @@ export default function PlannerPage() {
       id: "workspace",
       target: "workspace-switcher",
       placement: "right",
-      title: "Contexto isolado",
+      title: "Workspaces separados ",
       content: (
         <>
-          Cada <strong>workspace</strong> é um silo separado: Dev &amp; IA, Carreira, Pessoal...
-          Troque ou crie novos aqui. Contexto misturado = cabeça confusa.
+          Cada <strong>workspace</strong> representa uma área diferente da sua vida. Por exemplo: você pode criar um Workspace para suas rotinas diárias e outro, separado, para seus compromissos acadêmicos.
         </>
       ),
       onEnter: openSidebarOnMobile,
       onExit: closeSidebarOnMobile,
+    },
+    {
+      id: "create-workspace",
+      target: "new-workspace-dialog",
+      placement: "right",
+      title: "Criação de Workspace",
+      content: (
+        <>
+          Aqui você cria um novo espaço: escolha o <strong>nome</strong>, um <strong>ícone</strong> ou avatar personalizado e a <strong>cor</strong> temática. Tudo o que você fizer aqui ficará exclusivo desta área.
+        </>
+      ),
+      onEnter: () => {
+        closeSidebarOnMobile();
+        setIsNewWorkspaceDialogOpen(true);
+      },
+      onExit: () => setIsNewWorkspaceDialogOpen(false),
     },
     {
       id: "new-card",
@@ -148,10 +164,25 @@ export default function PlannerPage() {
       title: "Crie micro-entregas",
       content: (
         <>
-          Toda tarefa nasce aqui. Regra de ouro: se leva <strong>mais de 2h</strong>, quebre em
-          cards menores e acionáveis. Dica IA-First: peça para a IA fatiar o objetivo pra você.
+          Toda tarefa começa aqui. Clique para criá-la e preencha todos os dados necessários.
         </>
       ),
+    },
+    {
+      id: "create-card",
+      target: "new-card-dialog",
+      placement: "right",
+      title: "Criação de Card",
+      content: (
+        <>
+          Aqui você cadastra a tarefa: digite o <strong>título</strong>, defina a <strong>etapa inicial</strong>, a <strong>prioridade</strong> (P1 ao P4), a <strong>categoria</strong> e o prazo. Preencha os campos e adicione ao seu quadro!
+        </>
+      ),
+      onEnter: () => {
+        setSelectedColumn(columns[0]?.id || "");
+        setIsCardDialogOpen(true);
+      },
+      onExit: () => setIsCardDialogOpen(false),
     },
     {
       id: "metrics",
@@ -195,7 +226,7 @@ export default function PlannerPage() {
       id: "filters",
       target: "filters",
       placement: "bottom",
-      title: "Foco instantâneo",
+      title: "Filtros de tarefas",
       content: <>Filtre por texto, categoria ou prioridade para ver só o que importa agora.</>,
     },
     {
@@ -203,7 +234,7 @@ export default function PlannerPage() {
       target: "nav-whiteboard",
       action: "click",
       placement: "right",
-      title: "Sua vez! 🎮",
+      title: "Rascunha Infinito!",
       content: (
         <>
           Antes de executar, pense visualmente. Abra o <strong>Excalidraw</strong>, o quadro branco
@@ -221,7 +252,7 @@ export default function PlannerPage() {
       id: "whiteboard",
       target: "whiteboard",
       padding: 4,
-      title: "Rascunhe antes de executar",
+      title: "Rascunhe a vontade",
       content: (
         <>
           Desenhe arquitetura, fluxos e ideias soltas. Cada workspace tem seu próprio quadro, salvo
@@ -254,7 +285,7 @@ export default function PlannerPage() {
     {
       id: "done",
       placement: "center",
-      title: "Missão cumprida! 🏆",
+      title: "Turotial cumprido! 🏆",
       content: (
         <div className="flex flex-col gap-2">
           <span>Agora aplique o protocolo diário em 3 passos:</span>

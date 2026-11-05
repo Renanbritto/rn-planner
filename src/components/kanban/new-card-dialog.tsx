@@ -113,7 +113,10 @@ export function NewCardDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl text-slate-900 dark:text-slate-100 sm:max-w-[640px] max-h-[90vh] overflow-y-auto shadow-2xl dark:shadow-black/60 rounded-3xl p-6">
+      <DialogContent
+        data-tour="new-card-dialog"
+        className="border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0f1a]/95 backdrop-blur-2xl text-slate-900 dark:text-slate-100 sm:max-w-[640px] max-h-[90vh] overflow-y-auto shadow-2xl dark:shadow-black/60 rounded-3xl p-6"
+      >
         <DialogHeader>
           <DialogTitle className="font-comfortaa text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span>Novo Card</span>
