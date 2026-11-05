@@ -142,7 +142,7 @@ export function AppSidebar({
         </div>
 
         {/* Seletor de Workspace */}
-        <div className="p-2 border-b border-slate-200 dark:border-white/10 shrink-0">
+        <div data-tour="workspace-switcher" className="p-2 border-b border-slate-200 dark:border-white/10 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger
               className={`group flex items-center rounded-2xl transition-all duration-200 cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-cyan-500/50 ${
@@ -285,6 +285,7 @@ export function AppSidebar({
               <button
                 key={item.id}
                 type="button"
+                data-tour={`nav-${item.id}`}
                 onClick={() => handleSelectTab(item.id)}
                 className={`group relative flex items-center rounded-2xl transition-all duration-200 cursor-pointer ${
                   isCollapsed
@@ -355,6 +356,7 @@ export function AppSidebar({
             <div className="pt-2 mt-2 border-t border-slate-100 dark:border-white/5">
               <button
                 type="button"
+                data-tour="tutorial-button"
                 onClick={() => {
                   onOpenTutorial();
                   if (isMobileOpen) setIsMobileOpen(false);
@@ -362,7 +364,7 @@ export function AppSidebar({
                 className={`group relative flex w-full items-center gap-3 rounded-2xl p-2.5 transition-all duration-200 cursor-pointer border border-cyan-500/20 bg-cyan-500/5 hover:bg-cyan-500/15 hover:border-cyan-500/40 text-slate-700 dark:text-slate-200 ${
                   isCollapsed ? "justify-center" : "justify-start"
                 }`}
-                title="Abrir Tutorial IA-First (Guia Prático)"
+                title="Iniciar tour guiado pela plataforma"
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 group-hover:scale-105 transition-transform">
                   <Bot className="h-4 w-4" />
@@ -374,14 +376,14 @@ export function AppSidebar({
                       Tutorial IA
                     </span>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-sans truncate">
-                      Guia de Produtividade
+                      Tour guiado interativo
                     </span>
                   </div>
                 )}
 
                 {isCollapsed && (
                   <div className="pointer-events-none absolute left-full ml-3 hidden rounded-xl border border-slate-200 dark:border-white/10 bg-slate-900 px-3 py-1.5 text-xs font-comfortaa font-bold text-white shadow-xl group-hover:block z-50 whitespace-nowrap">
-                    Tutorial IA • Guia Prático
+                    Tutorial IA • Tour guiado
                   </div>
                 )}
               </button>

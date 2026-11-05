@@ -127,6 +127,7 @@ export function KanbanColumn({
 
   return (
     <div
+      data-tour="kanban-column"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

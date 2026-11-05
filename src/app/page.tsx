@@ -12,9 +12,14 @@ import { NewCardDialog } from "@/components/kanban/new-card-dialog";
 import { NewColumnDialog } from "@/components/kanban/new-column-dialog";
 import { NewWorkspaceDialog } from "@/components/workspace/new-workspace-dialog";
 import { EditWorkspaceDialog } from "@/components/workspace/edit-workspace-dialog";
-import { AiOnboardingDialog } from "@/components/onboarding/ai-onboarding-dialog";
+import { GuidedTour, TourStep } from "@/components/onboarding/guided-tour";
 import { Workspace } from "@/types/planner";
 import { Code2, Sliders } from "lucide-react";
+
+const TOUR_STORAGE_KEY = "rn_planner_guided_tour_completed_v1";
+
+const isMobileViewport = () =>
+  typeof window !== "undefined" && window.innerWidth < 768;
 
 export default function PlannerPage() {
   const [activeTab, setActiveTab] = useState<"kanban" | "whiteboard">("kanban");
@@ -85,18 +90,192 @@ export default function PlannerPage() {
   const [isNewWorkspaceDialogOpen, setIsNewWorkspaceDialogOpen] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [selectedColumn, setSelectedColumn] = useState<string>("");
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
 
-  // Tutorial automático no primeiro login / primeiro acesso
+  // Tour guiado automático no primeiro login / primeiro acesso
   useEffect(() => {
     if (!isLoaded) return;
-    if (typeof window !== "undefined") {
-      const completed = localStorage.getItem("rn_planner_onboarding_completed_v1");
-      if (!completed) {
-        setIsOnboardingOpen(true);
-      }
-    }
+    if (localStorage.getItem(TOUR_STORAGE_KEY)) return;
+    const timer = window.setTimeout(() => setIsTourOpen(true), 700);
+    return () => window.clearTimeout(timer);
   }, [isLoaded]);
+
+  const handleCloseTour = () => {
+    localStorage.setItem(TOUR_STORAGE_KEY, "true");
+    setIsTourOpen(false);
+  };
+
+  // No mobile a sidebar é um drawer: abre/fecha automaticamente nos passos que a usam
+  const openSidebarOnMobile = () => {
+    if (isMobileViewport()) setIsMobileSidebarOpen(true);
+  };
+  const closeSidebarOnMobile = () => {
+    if (isMobileViewport()) setIsMobileSidebarOpen(false);
+  };
+
+  const tourSteps: TourStep[] = [
+    {
+      id: "welcome",
+      placement: "center",
+      title: "Bem-vindo ao RN Planner 👋",
+      content: (
+        <>
+          Eu sou o <strong>RN Guide</strong>. Em menos de 1 minuto vou te mostrar, na prática,
+          como se organizar aqui com o método <strong>IA-First</strong>: contexto isolado,
+          tarefas pequenas e foco no que importa.
+        </>
+      ),
+      onEnter: () => setActiveTab("kanban"),
+    },
+    {
+      id: "workspace",
+      target: "workspace-switcher",
+      placement: "right",
+      title: "Contexto isolado",
+      content: (
+        <>
+          Cada <strong>workspace</strong> é um silo separado: Dev &amp; IA, Carreira, Pessoal...
+          Troque ou crie novos aqui. Contexto misturado = cabeça confusa.
+        </>
+      ),
+      onEnter: openSidebarOnMobile,
+      onExit: closeSidebarOnMobile,
+    },
+    {
+      id: "new-card",
+      target: "new-card",
+      placement: "bottom",
+      title: "Crie micro-entregas",
+      content: (
+        <>
+          Toda tarefa nasce aqui. Regra de ouro: se leva <strong>mais de 2h</strong>, quebre em
+          cards menores e acionáveis. Dica IA-First: peça para a IA fatiar o objetivo pra você.
+        </>
+      ),
+    },
+    {
+      id: "metrics",
+      target: "metrics",
+      optional: true,
+      placement: "bottom",
+      title: "Seu painel de comando",
+      content: (
+        <>
+          Total, em execução, críticas e concluídas. Se <strong>Em Execução</strong> passar de 3,
+          pare de puxar tarefas e termine o que começou.
+        </>
+      ),
+    },
+    {
+      id: "column",
+      target: "kanban-column",
+      placement: "right",
+      title: "Seu fluxo de trabalho",
+      content: (
+        <>
+          Cada coluna é uma etapa. Clique no título para renomear ou mudar a cor, e use o{" "}
+          <strong>[+]</strong> para criar um card direto nela.
+        </>
+      ),
+    },
+    {
+      id: "card",
+      target: "kanban-card",
+      optional: true,
+      placement: "right",
+      title: "Arraste e evolua",
+      content: (
+        <>
+          Clique num card para ver detalhes, checklist e selos de status. Arraste entre as colunas
+          para avançar no fluxo.
+        </>
+      ),
+    },
+    {
+      id: "filters",
+      target: "filters",
+      placement: "bottom",
+      title: "Foco instantâneo",
+      content: <>Filtre por texto, categoria ou prioridade para ver só o que importa agora.</>,
+    },
+    {
+      id: "go-whiteboard",
+      target: "nav-whiteboard",
+      action: "click",
+      placement: "right",
+      title: "Sua vez! 🎮",
+      content: (
+        <>
+          Antes de executar, pense visualmente. Abra o <strong>Excalidraw</strong>, o quadro branco
+          integrado.
+        </>
+      ),
+      actionHint: "Clique em “Excalidraw” para continuar",
+      onEnter: () => {
+        setActiveTab("kanban");
+        openSidebarOnMobile();
+      },
+      onExit: closeSidebarOnMobile,
+    },
+    {
+      id: "whiteboard",
+      target: "whiteboard",
+      padding: 4,
+      title: "Rascunhe antes de executar",
+      content: (
+        <>
+          Desenhe arquitetura, fluxos e ideias soltas. Cada workspace tem seu próprio quadro, salvo
+          automaticamente.
+        </>
+      ),
+      onEnter: () => setActiveTab("whiteboard"),
+    },
+    {
+      id: "go-kanban",
+      target: "nav-kanban",
+      action: "click",
+      placement: "right",
+      title: "Do rascunho para a ação",
+      content: <>Desenhou? Agora transforme o rascunho em cards. Volte para o quadro.</>,
+      actionHint: "Clique em “Card” para voltar ao quadro",
+      onEnter: () => {
+        setActiveTab("whiteboard");
+        openSidebarOnMobile();
+      },
+      onExit: closeSidebarOnMobile,
+    },
+    {
+      id: "tutorial-button",
+      target: "tutorial-button",
+      title: "Precisa rever?",
+      content: <>Este botão reabre o tour sempre que quiser.</>,
+      onEnter: () => setActiveTab("kanban"),
+    },
+    {
+      id: "done",
+      placement: "center",
+      title: "Missão cumprida! 🏆",
+      content: (
+        <div className="flex flex-col gap-2">
+          <span>Agora aplique o protocolo diário em 3 passos:</span>
+          <ol className="flex flex-col gap-1.5 pl-1">
+            <li>
+              <strong className="text-cyan-600 dark:text-cyan-400">1.</strong> Escolha 1 ou 2
+              tarefas <strong>P1</strong> que destravam o dia.
+            </li>
+            <li>
+              <strong className="text-cyan-600 dark:text-cyan-400">2.</strong> No máximo{" "}
+              <strong>3 cards</strong> em andamento ao mesmo tempo.
+            </li>
+            <li>
+              <strong className="text-cyan-600 dark:text-cyan-400">3.</strong> Bloqueou? Marque{" "}
+              <em>Aguardando</em>. Terminou? <em>Concluído</em>.
+            </li>
+          </ol>
+        </div>
+      ),
+    },
+  ];
 
   const handleQuickAdd = (columnId: string) => {
     setSelectedColumn(columnId);
@@ -164,7 +343,7 @@ export default function PlannerPage() {
         onSelectWorkspace={setActiveWorkspaceId}
         onOpenNewWorkspace={() => setIsNewWorkspaceDialogOpen(true)}
         onOpenEditWorkspace={(ws) => setEditingWorkspace(ws)}
-        onOpenTutorial={() => setIsOnboardingOpen(true)}
+        onOpenTutorial={() => setIsTourOpen(true)}
       />
 
       {/* Área Principal de Conteúdo */}
@@ -188,7 +367,7 @@ export default function PlannerPage() {
             setActiveTab={setActiveTab}
             onToggleMobileMenu={() => setIsMobileSidebarOpen(true)}
             onApplySortToAllColumns={applySortToAllColumns}
-            onOpenTutorial={() => setIsOnboardingOpen(true)}
+            onOpenTutorial={() => setIsTourOpen(true)}
           />
 
           {/* Alternância entre Quadro Kanban e Whiteboard Canvas (Excalidraw) */}
@@ -212,7 +391,7 @@ export default function PlannerPage() {
               />
             </div>
           ) : (
-            <div className="flex-1 w-full animate-in fade-in duration-200">
+            <div data-tour="whiteboard" className="flex-1 w-full animate-in fade-in duration-200">
               <WhiteboardWrapper key={activeWorkspace.id} workspaceId={activeWorkspace.id} />
             </div>
           )}
@@ -283,11 +462,8 @@ export default function PlannerPage() {
         onDeleteWorkspace={deleteWorkspace}
       />
 
-      {/* Modal Tutorial Onboarding IA-First */}
-      <AiOnboardingDialog
-        open={isOnboardingOpen}
-        onOpenChange={setIsOnboardingOpen}
-      />
+      {/* Tour guiado estilo jogo (primeiro acesso ou sob demanda) */}
+      {isTourOpen && <GuidedTour steps={tourSteps} onClose={handleCloseTour} />}
     </div>
   );
 }

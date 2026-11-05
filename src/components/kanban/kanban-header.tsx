@@ -213,6 +213,7 @@ export function KanbanHeader({
           {activeTab === "kanban" && (
             <button
               onClick={onOpenNewCard}
+              data-tour="new-card"
               className="flex items-center gap-1.5 h-9 px-3 sm:px-3.5 rounded-xl text-xs font-bold font-comfortaa bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-slate-950 shadow-md shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-all cursor-pointer shrink-0"
               title="Criar novo card no quadro"
             >
@@ -259,8 +260,9 @@ export function KanbanHeader({
           {onOpenTutorial && (
             <button
               onClick={onOpenTutorial}
+              data-tour="tutorial-button"
               className="flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl text-xs font-comfortaa font-semibold text-cyan-700 dark:text-cyan-300 hover:text-cyan-800 dark:hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all cursor-pointer shadow-xs shrink-0"
-              title="Abrir Tutorial IA-First (Guia Prático)"
+              title="Iniciar tour guiado pela plataforma"
             >
               <Bot className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
               <span className="hidden sm:inline">Tutorial IA</span>
@@ -391,6 +393,7 @@ export function KanbanHeader({
 
           {/* Grid de 4 Cards de Métricas Obsidian Glass (Sempre visível no Desktop, expansível no Mobile) */}
           <div
+            data-tour="metrics"
             className={`grid grid-cols-2 md:grid-cols-4 gap-3 animate-in fade-in duration-200 ${showMobileMetrics ? "grid" : "hidden md:grid"
               }`}
           >
@@ -480,7 +483,7 @@ export function KanbanHeader({
           </div>
 
           {/* Barra de Busca e Filtros - Totalmente adaptada para Mobile & Desktop */}
-          <div className="flex flex-col gap-2.5 bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-2.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-lg dark:shadow-black/20 animate-in fade-in duration-200">
+          <div data-tour="filters" className="flex flex-col gap-2.5 bg-white/80 dark:bg-[#0b0f1a]/95 backdrop-blur-2xl p-2.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-lg dark:shadow-black/20 animate-in fade-in duration-200">
             {/* Linha Principal de Busca + Gatilho de Filtros no Mobile */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">

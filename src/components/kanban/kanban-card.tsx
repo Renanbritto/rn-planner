@@ -118,6 +118,7 @@ export function KanbanCard({
 
   return (
     <div
+      data-tour="kanban-card"
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
