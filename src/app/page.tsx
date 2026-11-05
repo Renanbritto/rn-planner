@@ -285,7 +285,7 @@ export default function PlannerPage() {
     {
       id: "done",
       placement: "center",
-      title: "Turotial cumprido! 🏆",
+      title: "Tutotial cumprido! 🏆",
       content: (
         <div className="flex flex-col gap-2">
           <span>Agora aplique o protocolo diário em 3 passos:</span>
