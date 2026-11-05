@@ -110,17 +110,17 @@ export function LoginView() {
       {/* ========================================================= */}
       {/* COLUNA ESQUERDA: Hero de Marca & Manifesto (Estilo Dividido) */}
       {/* ========================================================= */}
-      <div className="relative w-full lg:w-1/2 min-h-[380px] lg:min-h-screen bg-gradient-to-br from-[#06182c] via-[#090d16] to-[#030712] p-8 sm:p-12 lg:p-16 flex flex-col justify-between overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-white/10 shrink-0">
+      <div className="relative w-full lg:w-1/2 min-h-[380px] lg:min-h-screen bg-gradient-to-br from-slate-100 via-cyan-50/40 to-blue-50/50 dark:from-[#06182c] dark:via-[#090d16] dark:to-[#030712] p-8 sm:p-12 lg:p-16 flex flex-col justify-between overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/10 shrink-0 transition-colors duration-200">
         {/* Glow Orbs Atmosféricos Neon */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -left-24 h-[420px] w-[420px] rounded-full bg-cyan-500/15 blur-[120px]" />
-          <div className="absolute top-1/2 -right-24 h-[380px] w-[380px] rounded-full bg-indigo-500/10 blur-[130px]" />
-          <div className="absolute -bottom-24 left-1/3 h-[400px] w-[400px] rounded-full bg-emerald-500/10 blur-[140px]" />
-          {/* Subtle grid pattern */}
+          <div className="absolute -top-24 -left-24 h-[420px] w-[420px] rounded-full bg-cyan-500/10 dark:bg-cyan-500/15 blur-[120px]" />
+          <div className="absolute top-1/2 -right-24 h-[380px] w-[380px] rounded-full bg-indigo-500/10 dark:bg-indigo-500/10 blur-[130px]" />
+          <div className="absolute -bottom-24 left-1/3 h-[400px] w-[400px] rounded-full bg-emerald-500/10 dark:bg-emerald-500/10 blur-[140px]" />
+          {/* Subtle grid pattern adaptável ao tema */}
           <div
-            className="absolute inset-0 opacity-[0.04]"
+            className="absolute inset-0 opacity-[0.05] dark:opacity-[0.04]"
             style={{
-              backgroundImage: "radial-gradient(#06b6d4 1px, transparent 1px)",
+              backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
               backgroundSize: "32px 32px",
             }}
           />
@@ -131,58 +131,58 @@ export function LoginView() {
           <BrandLogo size={42} showText={true} />
 
           {/* Tag IA-First sutil */}
-          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase text-cyan-700 dark:text-cyan-400 bg-cyan-500/10 dark:bg-cyan-500/15 border border-cyan-500/30 dark:border-cyan-500/20">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-pulse" />
             IA-First Planner
           </span>
         </div>
 
-        {/* Rodapé / Manifesto (inspirado no modelo de referência com nossas cores) */}
+        {/* Manifesto / Hero Copy */}
         <div className="relative z-10 my-auto py-10 lg:py-0 flex flex-col gap-5 max-w-xl">
-          <div className="inline-flex items-center gap-2 self-start px-3.5 py-1.5 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">
+          <div className="inline-flex items-center gap-2 self-start px-3.5 py-1.5 rounded-full text-[11px] font-mono font-bold tracking-wider uppercase text-cyan-700 dark:text-cyan-400 bg-cyan-500/10 dark:bg-cyan-500/15 border border-cyan-500/30 dark:border-cyan-500/20">
             FOCO • EXECUÇÃO • PRODUTIVIDADE
           </div>
 
-          <h1 className="font-comfortaa text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-[1.15] tracking-tight">
+          <h1 className="font-comfortaa text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white leading-[1.15] tracking-tight">
             &ldquo;Uma mente focada n&atilde;o precisa viver da sua aten&ccedil;&atilde;o.&rdquo;
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-300/90 font-sans leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300/90 font-sans leading-relaxed">
             Isole contextos em workspaces, fatie grandes metas em micro-entregas acion&aacute;veis e execute com clareza total.
           </p>
 
-          {/* Três Pilares Visuais */}
+          {/* Três Pilares Visuais adaptáveis ao tema claro e escuro */}
           <div className="pt-3 grid grid-cols-3 gap-2.5 sm:gap-3 text-xs">
-            <div className="p-3 rounded-2xl border border-cyan-500/20 bg-white/[0.03] backdrop-blur-md flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-cyan-400 font-bold font-comfortaa">
+            <div className="p-3 rounded-2xl border border-slate-200/90 dark:border-cyan-500/20 bg-white/80 dark:bg-white/[0.03] backdrop-blur-md shadow-xs flex flex-col gap-1 transition-colors">
+              <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400 font-bold font-comfortaa">
                 <Kanban className="h-3.5 w-3.5" />
                 <span>Kanban</span>
               </div>
-              <span className="text-[11px] text-slate-400 font-sans">Fluxo &amp; Selos</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Fluxo &amp; Selos</span>
             </div>
 
-            <div className="p-3 rounded-2xl border border-indigo-500/20 bg-white/[0.03] backdrop-blur-md flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-indigo-400 font-bold font-comfortaa">
+            <div className="p-3 rounded-2xl border border-slate-200/90 dark:border-indigo-500/20 bg-white/80 dark:bg-white/[0.03] backdrop-blur-md shadow-xs flex flex-col gap-1 transition-colors">
+              <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-400 font-bold font-comfortaa">
                 <PenTool className="h-3.5 w-3.5" />
                 <span>Excalidraw</span>
               </div>
-              <span className="text-[11px] text-slate-400 font-sans">Canvas Livre</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Canvas Livre</span>
             </div>
 
-            <div className="p-3 rounded-2xl border border-emerald-500/20 bg-white/[0.03] backdrop-blur-md flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-emerald-400 font-bold font-comfortaa">
+            <div className="p-3 rounded-2xl border border-slate-200/90 dark:border-emerald-500/20 bg-white/80 dark:bg-white/[0.03] backdrop-blur-md shadow-xs flex flex-col gap-1 transition-colors">
+              <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold font-comfortaa">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 <span>Nuvem</span>
               </div>
-              <span className="text-[11px] text-slate-400 font-sans">Sync RLS</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Sync RLS</span>
             </div>
           </div>
         </div>
 
-        {/* Rodapé esquerdo discreto */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 font-mono pt-4 border-t border-white/5">
+        {/* Rodapé esquerdo */}
+        <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-mono pt-4 border-t border-slate-200/80 dark:border-white/5">
           <span>RN Planner &bull; Personal OS</span>
-          <span className="text-cyan-400">Obsidian Glass</span>
+          <span className="text-cyan-700 dark:text-cyan-400 font-semibold">Obsidian Glass</span>
         </div>
       </div>
 
