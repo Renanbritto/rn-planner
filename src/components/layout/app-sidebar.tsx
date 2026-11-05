@@ -373,7 +373,7 @@ export function AppSidebar({
                 {!isCollapsed && (
                   <div className="flex flex-col text-left truncate">
                     <span className="font-comfortaa text-xs font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-300">
-                      Tutorial IA
+                      Guia
                     </span>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-sans truncate">
                       Tour guiado interativo
@@ -383,7 +383,7 @@ export function AppSidebar({
 
                 {isCollapsed && (
                   <div className="pointer-events-none absolute left-full ml-3 hidden rounded-xl border border-slate-200 dark:border-white/10 bg-slate-900 px-3 py-1.5 text-xs font-comfortaa font-bold text-white shadow-xl group-hover:block z-50 whitespace-nowrap">
-                    Tutorial IA • Tour guiado
+                    Guia • Tour guiado
                   </div>
                 )}
               </button>

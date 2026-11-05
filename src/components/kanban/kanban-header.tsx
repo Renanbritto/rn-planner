@@ -265,7 +265,7 @@ export function KanbanHeader({
               title="Iniciar tour guiado pela plataforma"
             >
               <Bot className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-              <span className="hidden sm:inline">Tutorial IA</span>
+              <span className="hidden sm:inline">Guia</span>
             </button>
           )}
 
@@ -319,7 +319,7 @@ export function KanbanHeader({
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/10 font-comfortaa font-medium"
                   >
                     <Bot className="h-4 w-4 text-cyan-500" />
-                    <span>Tutorial IA • Guia</span>
+                    <span>Guia</span>
                   </DropdownMenuItem>
                 )}
 
