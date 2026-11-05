@@ -256,19 +256,6 @@ export function KanbanHeader({
           {/* Alternador de Tema */}
           <ThemeToggle />
 
-          {/* Botão Tutorial IA-First */}
-          {onOpenTutorial && (
-            <button
-              onClick={onOpenTutorial}
-              data-tour="tutorial-button"
-              className="flex items-center gap-1.5 h-9 px-2.5 sm:px-3 rounded-xl text-xs font-comfortaa font-semibold text-cyan-700 dark:text-cyan-300 hover:text-cyan-800 dark:hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all cursor-pointer shadow-xs shrink-0"
-              title="Iniciar tour guiado pela plataforma"
-            >
-              <Bot className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-              <span className="hidden sm:inline">Guia</span>
-            </button>
-          )}
-
           {/* Desktop Only: Modo Convidado Sair */}
           {isGuestMode && !user && (
             <button

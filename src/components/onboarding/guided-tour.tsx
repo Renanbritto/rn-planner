@@ -6,6 +6,7 @@ import {
   Bot,
   ArrowRight,
   ArrowLeft,
+  X,
   MousePointerClick,
   Trophy,
 } from "lucide-react";
@@ -517,6 +518,14 @@ export function GuidedTour({ steps, onClose }: GuidedTourProps) {
                 </span>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={skip}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              title="Sair do tutorial (Esc)"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Barra de Progresso / XP */}

@@ -290,7 +290,11 @@ export default function PlannerPage() {
       optional: true,
       title: "Precisa rever?",
       content: <>Este botão reabre o tour sempre que quiser.</>,
-      onEnter: () => setActiveTab("kanban"),
+      onEnter: () => {
+        setActiveTab("kanban");
+        openSidebarOnMobile();
+      },
+      onExit: closeSidebarOnMobile,
     },
     {
       id: "done",
